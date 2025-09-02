@@ -2753,7 +2753,7 @@ select:focus-visible {
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
     :root {
         --white: #1a1a1a;
         --gray-50: #2a2a2a;
@@ -2767,7 +2767,7 @@ select:focus-visible {
         --gray-800: #aaaaaa;
         --gray-900: #ffffff;
     }
-}
+} */
 
 /* Print styles */
 @media print {
