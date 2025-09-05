@@ -77,6 +77,22 @@ class AppState {
         };
 
         console.log('데이터 처리 완료:', this.data.processed);
+        
+        // 디버깅: 인삼, 담배 등 특정 작물의 데이터 구조 확인
+        const sampleCrops = data.filter(row => 
+            row.cropName?.includes('인삼') || row.cropName?.includes('담배')
+        ).slice(0, 5);
+        
+        if (sampleCrops.length > 0) {
+            console.log('🔍 특정 작물 샘플 데이터:', sampleCrops.map(row => ({
+                cropName: row.cropName,
+                year: row.year,
+                region: row.region,
+                area: row.area,
+                production: row.production,
+                originalKeys: Object.keys(row)
+            })));
+        }
     }
 
     // 필드 매핑 자동 감지
@@ -162,7 +178,6 @@ async function initializeApp() {
         await renderAllSections();
         initTrendTabs(); // 데이터 로드 후 동향 분석 탭 초기화
         showLoadingOverlay(false);
-        updateLastUpdatedTime();
     } catch (error) {
         console.error('앱 초기화 중 오류:', error);
         showLoadingOverlay(false);
@@ -429,10 +444,10 @@ function setupDataTableControls() {
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
         // Ctrl/Cmd + 숫자로 섹션 이동
-        if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '6') {
+        if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '7') {
             e.preventDefault();
             const sectionIndex = parseInt(e.key) - 1;
-            const sections = ['dashboard', 'analytics', 'comparison', 'trends', 'data', 'reports'];
+            const sections = ['home', 'dashboard', 'analytics', 'comparison', 'trends', 'data', 'reports'];
             if (sections[sectionIndex]) {
                 showSection(sections[sectionIndex]);
             }
@@ -470,6 +485,71 @@ function showSection(sectionId) {
     if (targetSection) {
         targetSection.classList.add('active');
         appState.ui.currentSection = sectionId;
+        
+        // 페이지 상단으로 스크롤
+        window.scrollTo(0, 0);
+        
+        // 재배동향 섹션이 표시될 때 슬라이더 설정
+        if (sectionId === 'cultivation') {
+            setTimeout(() => {
+                setupCardAreaFilterSliders();
+                // 슬라이더 설정 후 초기 데이터 업데이트 (데이터 로딩 확인)
+                setTimeout(() => {
+                    if (appState.data.raw && appState.data.raw.length > 0) {
+                        console.log('🚀 재배동향 섹션 초기 데이터 업데이트 시작');
+                        handleCultivationChange();
+                    } else {
+                        console.log('⚠️ 데이터가 아직 로드되지 않음, 1초 후 재시도');
+                        setTimeout(() => {
+                            if (appState.data.raw && appState.data.raw.length > 0) {
+                                handleCultivationChange();
+                            }
+                        }, 1000);
+                    }
+                }, 100);
+            }, 200);
+        }
+        
+        // 순위분석 섹션이 표시될 때 테이블 업데이트
+        if (sectionId === 'ranking') {
+            setTimeout(() => {
+                if (appState.data.raw && appState.data.raw.length > 0) {
+                    console.log('🏆 순위분석 섹션 초기 데이터 업데이트 시작');
+                    updateRankingTables();
+                } else {
+                    console.log('⚠️ 데이터가 아직 로드되지 않음, 1초 후 재시도');
+                    setTimeout(() => {
+                        if (appState.data.raw && appState.data.raw.length > 0) {
+                            updateRankingTables();
+                        }
+                    }, 1000);
+                }
+            }, 100);
+        }
+        
+        // 특화계수 섹션이 표시될 때 분석 업데이트
+        if (sectionId === 'specialization') {
+            setTimeout(() => {
+                if (appState.data.raw && appState.data.raw.length > 0) {
+                    console.log('⭐ 특화계수 섹션 초기 데이터 업데이트 시작');
+                    updateSpecializationAnalysis();
+                } else {
+                    console.log('⚠️ 데이터가 아직 로드되지 않음, 1초 후 재시도');
+                    setTimeout(() => {
+                        if (appState.data.raw && appState.data.raw.length > 0) {
+                            updateSpecializationAnalysis();
+                        }
+                    }, 1000);
+                }
+            }, 100);
+        }
+        
+        // 홈 섹션이 표시될 때 홈 데이터 업데이트
+        if (sectionId === 'home') {
+            setTimeout(() => {
+                renderHome();
+            }, 100);
+        }
     }
 }
 
@@ -477,10 +557,12 @@ function showSection(sectionId) {
 function updateBreadcrumb(sectionName) {
     const breadcrumb = document.getElementById('currentSection');
     const sectionNames = {
+        home: '홈',
         dashboard: '대시보드',
-        analytics: '고급 분석',
-        comparison: '지역 비교',
-        trends: '트렌드 분석',
+        analytics: '작목군별 TOP 5 동향',
+        cultivation: '재배동향',
+        ranking: '순위분석',
+        specialization: '특화계수',
         data: '데이터 테이블',
         reports: '분석 리포트'
     };
@@ -499,9 +581,9 @@ async function renderDashboard() {
     }
     
     // 강원도 데이터 확인, 없으면 전체 데이터 사용
-    let targetData = appState.data.raw.filter(row => row.region === '강원도');
+    let targetData = appState.data.raw.filter(row => row.region === '강원');
     if (targetData.length === 0) {
-        console.log('강원도 데이터가 없어서 전체 데이터를 사용합니다.');
+        console.log('강원 데이터가 없어서 전체 데이터를 사용합니다.');
         targetData = appState.data.raw;
     }
     
@@ -700,7 +782,7 @@ async function renderTop5Chart() {
     // 작목군이 선택된 경우 해당 작목군 내 작목명 TOP5, 그렇지 않으면 작목군별 재배면적
     let sortedData;
     if (selectedCropGroup !== 'all') {
-        if (chartTitle) chartTitle.textContent = `${selectedCropGroup} 작목명 TOP5 ${metricNames[selectedMetric]}`;
+        if (chartTitle) chartTitle.textContent = `${selectedCropGroup} TOP5 ${metricNames[selectedMetric]}`;
         // 선택된 작목군의 작목명별 재배면적 집계
         const cropNameData = {};
         const filteredCropData = targetData.filter(row => row.cropGroup === selectedCropGroup);
@@ -826,7 +908,7 @@ async function renderCropDistributionChart() {
     }
     
     // 데이터 선택 (강원도 우선, 없으면 전체)
-    let targetData = appState.data.raw.filter(row => row.region === '강원도');
+    let targetData = appState.data.raw.filter(row => row.region === '강원');
     if (targetData.length === 0) {
         targetData = appState.data.raw;
     }
@@ -984,10 +1066,6 @@ function renderGrowthChart() {
     console.log('증감률 분석 차트 렌더링 - 새로운 시스템에서 처리됨');
 }
 
-// 데이터 테이블 렌더링 (레거시)
-function renderDataTable() {
-    console.log('데이터 테이블 렌더링 - 새로운 시스템에서 처리됨');
-}
 
 // 데이터 테이블 업데이트 (레거시)
 function updateDataTable() {
@@ -1067,7 +1145,6 @@ async function refreshData() {
         
         showLoadingOverlay(false);
         showToast('success', '데이터가 성공적으로 새로고침되었습니다!');
-        updateLastUpdatedTime();
     } catch (error) {
         showLoadingOverlay(false);
         showToast('error', '데이터 새로고침 중 오류가 발생했습니다.');
@@ -1116,21 +1193,6 @@ function showToast(type, message) {
     }
 }
 
-// 마지막 업데이트 시간 표시
-function updateLastUpdatedTime() {
-    const element = document.getElementById('lastUpdated');
-    if (element) {
-        const now = new Date();
-        const timeString = now.toLocaleString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        element.textContent = `마지막 업데이트: ${timeString}`;
-    }
-}
 
 // 데이터 내보내기
 function exportData(format = 'csv') {
@@ -1192,7 +1254,157 @@ async function renderTrends() {
 }
 
 async function renderDataTable() {
-    console.log('DataTable 섹션 렌더링');
+    console.log('DataTable 섹션 렌더링 시작');
+    
+    try {
+        // 데이터가 로드되지 않았으면 지연 처리
+        if (!appState.data.raw || appState.data.raw.length === 0) {
+            console.log('데이터가 아직 로드되지 않음, 1초 후 재시도');
+            setTimeout(async () => {
+                if (appState.data.raw && appState.data.raw.length > 0) {
+                    console.log('데이터 로드 완료, 데이터 테이블 재렌더링');
+                    await renderDataTable();
+                }
+            }, 1000);
+            return;
+        }
+        
+        // 필터 초기화
+        initializeDataTableFilters();
+        
+        // 전체 데이터 로드 및 테이블 렌더링
+        await loadDataTableData();
+        
+        // 이벤트 리스너 설정
+        setupDataTableEventListeners();
+        
+        console.log('✅ DataTable 섹션 렌더링 완료');
+    } catch (error) {
+        console.error('❌ DataTable 렌더링 실패:', error);
+    }
+}
+
+async function renderHome() {
+    console.log('Home 섹션 렌더링 시작');
+    
+    try {
+        // 홈 섹션 통계 업데이트
+        updateHomeStatistics();
+        
+        // 빠른 탐색 이벤트 리스너 설정
+        setupQuickNavigation();
+        
+        // 최종 업데이트 날짜 설정
+        updateLastUpdateDate();
+        
+        console.log('✅ Home 섹션 렌더링 완료');
+    } catch (error) {
+        console.error('❌ Home 렌더링 실패:', error);
+    }
+}
+
+// 홈 섹션 통계 업데이트
+function updateHomeStatistics() {
+    if (!appState.data.raw || appState.data.raw.length === 0) {
+        console.log('데이터가 없어서 홈 통계를 업데이트할 수 없습니다.');
+        return;
+    }
+    
+    try {
+        // 총 데이터 수
+        const totalDataElement = document.querySelector('.data-info .info-card:nth-child(1) .info-value');
+        if (totalDataElement) {
+            totalDataElement.textContent = appState.data.raw.length.toLocaleString() + '건';
+        }
+        
+        // 작목 수
+        const uniqueCrops = [...new Set(appState.data.raw.map(item => item.작목명))].length;
+        const cropsElement = document.querySelector('.data-info .info-card:nth-child(2) .info-value');
+        if (cropsElement) {
+            cropsElement.textContent = uniqueCrops + '개';
+        }
+        
+        // 최신 연도
+        const years = appState.data.raw.map(item => item.연도).filter(year => year);
+        const latestYear = Math.max(...years);
+        const yearElement = document.querySelector('.data-info .info-card:nth-child(3) .info-value');
+        if (yearElement) {
+            yearElement.textContent = latestYear + '년';
+        }
+        
+        console.log('홈 통계 업데이트 완료');
+    } catch (error) {
+        console.error('홈 통계 업데이트 실패:', error);
+    }
+}
+
+// 빠른 탐색 이벤트 리스너 설정
+function setupQuickNavigation() {
+    const navCards = document.querySelectorAll('.quick-nav-card');
+    
+    navCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const targetSection = card.dataset.section;
+            if (targetSection) {
+                // 해당 섹션으로 이동
+                navigateToSection(targetSection);
+            }
+        });
+        
+        // 호버 효과를 위한 추가 이벤트
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+        });
+    });
+    
+    console.log('빠른 탐색 이벤트 리스너 설정 완료');
+}
+
+// 최종 업데이트 날짜 설정
+function updateLastUpdateDate() {
+    const updateDateElement = document.querySelector('.data-info .source-info');
+    if (updateDateElement) {
+        const currentDate = new Date();
+        const formattedDate = currentDate.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        // 기존 텍스트 유지하면서 날짜만 업데이트
+        const existingText = updateDateElement.textContent;
+        if (!existingText.includes('최종 업데이트:')) {
+            updateDateElement.textContent = existingText + ` (최종 업데이트: ${formattedDate})`;
+        }
+    }
+    
+    console.log('최종 업데이트 날짜 설정 완료');
+}
+
+// 섹션으로 이동하는 함수 (빠른 탐색 카드에서 사용)
+function navigateToSection(sectionId) {
+    // 네비게이션 링크 클릭 이벤트 시뮬레이션
+    const navLink = document.querySelector(`[data-section="${sectionId}"]`);
+    if (navLink) {
+        navLink.click();
+    } else {
+        // 직접 섹션 표시
+        showSection(sectionId);
+        updateBreadcrumb(sectionId);
+        
+        // 네비게이션 활성 상태 업데이트
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        const targetNavLink = document.querySelector(`[data-section="${sectionId}"]`);
+        if (targetNavLink) {
+            targetNavLink.classList.add('active');
+        }
+        
+        appState.ui.currentSection = sectionId;
+    }
 }
 
 async function renderReports() {
@@ -1435,8 +1647,8 @@ async function updateComparisonTable(yearA, yearB) {
         
         
         // 지역별 데이터 분리
-        const gangwonDataA = dataA.filter(row => row.region === '강원도' || row.region === '강원');
-        const gangwonDataB = dataB.filter(row => row.region === '강원도' || row.region === '강원');
+        const gangwonDataA = dataA.filter(row => row.region === '강원');
+        const gangwonDataB = dataB.filter(row => row.region === '강원');
         
         // 전국 데이터 - 여러 가지 전국 표기 방식 지원
         const nationalDataA = dataA.filter(row => {
@@ -1750,7 +1962,7 @@ async function renderTrendChart() {
     
     years.forEach(year => {
         const yearData = appState.data.raw.filter(row => row.year === year);
-        const gangwonYearData = yearData.filter(row => row.region === '강원도' || row.region === '강원');
+        const gangwonYearData = yearData.filter(row => row.region === '강원');
         // 여러 가지 전국 표기 방식 지원
         const nationalYearData = yearData.filter(row => {
             const region = row.region;
@@ -1919,8 +2131,8 @@ async function renderRatioComparisonChart() {
     const dataA = appState.data.raw.filter(row => row.year == yearA);
     const dataB = appState.data.raw.filter(row => row.year == yearB);
     
-    const gangwonDataA = dataA.filter(row => row.region === '강원도' || row.region === '강원');
-    const gangwonDataB = dataB.filter(row => row.region === '강원도' || row.region === '강원');
+    const gangwonDataA = dataA.filter(row => row.region === '강원');
+    const gangwonDataB = dataB.filter(row => row.region === '강원');
     
     // 여러 가지 전국 표기 방식 지원
     const nationalDataA = dataA.filter(row => {
@@ -2103,7 +2315,7 @@ function updateCropGroupCardHeaders() {
     // 차트 제목들도 업데이트
     updateAllChartTitles(selectedMetric);
     
-    // 증감 분석 표 제목과 내용 업데이트
+    // 증감 분석 표 제목과 내용 업데이트 (작목군별 TOP5 탭용)
     updateCropChangeAnalysisTable(selectedMetric);
     
     // 카드 내부 테이블과 차트도 업데이트
@@ -2140,7 +2352,7 @@ function updateAllChartTitles(selectedMetric) {
 // 작목별 증감 분석 표 업데이트 함수 (재배동향 탭용)
 function updateCultivationCropChangeAnalysisTable(selectedMetric) {
     const metricText = selectedMetric === 'area' ? '재배면적' : '생산량';
-    const labelText = selectedMetric === 'area' ? '면적' : '구성비';
+    const labelText = selectedMetric === 'area' ? '면적' : '생산량';
     
     // 카드 제목 업데이트  
     const cardTitleElement = document.getElementById('cultivation-card-title');
@@ -2172,15 +2384,33 @@ function updateCultivationCropChangeAnalysisTable(selectedMetric) {
         return;
     }
     
-    analyzeCultivationCropChanges(yearA, yearB, selectedMetric);
+    // 전국 분석 (선택된 측정 항목으로 분석하되, 테이블 타입은 재배면적 기준 유지)
+    const nationalAnalysis = analyzeCultivationTrends(yearA, yearB, selectedMetric, '전국');
+    if (nationalAnalysis) {
+        // 재배면적 동향 테이블 업데이트 (슬라이더는 재배면적 기준이므로 'area' 유지)
+        updateCultivationTrendTable('cultivation-crop-change-analysis-table', nationalAnalysis, 'area');
+        
+        // 구성비 동향 테이블 업데이트 (카드2는 재배면적 필터이므로 'area' 유지)
+        updateCultivationTrendTable('cultivation-crop-composition-analysis-table', nationalAnalysis, 'area');
+    }
+
+    // 강원도 데이터 분석 (선택된 측정 항목으로 분석하되, 테이블 타입은 재배면적 기준 유지)
+    const gangwonAnalysis = analyzeCultivationTrends(yearA, yearB, selectedMetric, '강원');
+    if (gangwonAnalysis) {
+        // 강원 재배면적 동향 테이블 업데이트 (슬라이더는 재배면적 기준이므로 'area' 유지)
+        updateCultivationTrendTable('cultivation-gangwon-crop-change-analysis-table', gangwonAnalysis, 'area');
+        
+        // 강원 구성비 동향 테이블 업데이트 (카드4는 재배면적 필터이므로 'area' 유지)
+        updateCultivationTrendTable('cultivation-gangwon-crop-composition-analysis-table', gangwonAnalysis, 'area');
+    }
 }
 
 // 재배동향 탭용 작목별 증감 분석 함수
 function analyzeCultivationCropChanges(yearA, yearB, selectedMetric) {
     console.log(`📈 재배동향 탭 작목별 ${selectedMetric} 증감 분석 시작: ${yearA}년 vs ${yearB}년`);
     
-    const dataA = appState.data.raw.filter(row => row.year === yearA && (row.region === '강원도' || row.region === '강원'));
-    const dataB = appState.data.raw.filter(row => row.year === yearB && (row.region === '강원도' || row.region === '강원'));
+    const dataA = appState.data.raw.filter(row => row.year === yearA && row.region === '강원');
+    const dataB = appState.data.raw.filter(row => row.year === yearB && row.region === '강원');
     
     console.log(`📊 재배동향 분석 데이터: A년도=${dataA.length}건, B년도=${dataB.length}건`);
     
@@ -2244,8 +2474,8 @@ function analyzeCultivationCropChanges(yearA, yearB, selectedMetric) {
 function analyzeCropChanges(yearA, yearB, selectedMetric) {
     console.log(`📈 작목별 ${selectedMetric} 증감 분석 시작: ${yearA}년 vs ${yearB}년`);
     
-    const dataA = appState.data.raw.filter(row => row.year === yearA && (row.region === '강원도' || row.region === '강원'));
-    const dataB = appState.data.raw.filter(row => row.year === yearB && (row.region === '강원도' || row.region === '강원'));
+    const dataA = appState.data.raw.filter(row => row.year === yearA && row.region === '강원');
+    const dataB = appState.data.raw.filter(row => row.year === yearB && row.region === '강원');
     
     console.log(`📊 분석 데이터: A년도=${dataA.length}건, B년도=${dataB.length}건`);
     
@@ -2419,13 +2649,12 @@ function setupCultivationControls() {
         cultivationTrendMetric.addEventListener('change', handleCultivationChange);
     }
     
-    // 각 카드별 면적 필터 슬라이더 설정
-    setupCardAreaFilterSliders();
-    
-    // 초기 업데이트
+    // 각 카드별 면적 필터 슬라이더 설정 (DOM 로드 후 지연 실행)
     setTimeout(() => {
-        handleCultivationChange();
-    }, 500);
+        setupCardAreaFilterSliders();
+    }, 100);
+    
+    // 초기 업데이트는 showSection에서 처리됨
     
     console.log('🌱 재배동향 탭 컨트롤들 설정 완료');
 }
@@ -2439,7 +2668,54 @@ function handleCultivationChange() {
     // 증감 분석 표 업데이트
     updateCultivationCropChangeAnalysisTable(selectedMetric);
     
+    // 슬라이더 필터 다시 적용 (측정 항목 변경 시 필터링된 테이블도 업데이트)
+    setTimeout(() => {
+        const cardConfigs = [
+            { id: 'card1', sliderId: 'card1-area-filter-slider' },
+            { id: 'card2', sliderId: 'card2-area-filter-slider' },
+            { id: 'card3', sliderId: 'card3-area-filter-slider' },
+            { id: 'card4', sliderId: 'card4-area-filter-slider' }
+        ];
+        
+        cardConfigs.forEach(config => {
+            const slider = document.getElementById(config.sliderId);
+            if (slider && slider.value > 0) {
+                console.log(`🔄 측정 항목 변경으로 인한 ${config.id} 슬라이더 필터 재적용`);
+                // 슬라이더 변경 이벤트를 수동으로 트리거
+                slider.dispatchEvent(new Event('input'));
+            }
+        });
+    }, 100);
+    
     console.log('🌱 재배동향 탭 업데이트 완료');
+}
+
+// 작목군별 TOP5 탭의 증감 분석 표 업데이트 함수
+function updateCropChangeAnalysisTable(selectedMetric) {
+    console.log('📊 작목군별 TOP5 탭 증감 분석 표 업데이트:', selectedMetric);
+    
+    // 현재 선택된 연도들 가져오기
+    const yearA = parseInt(document.getElementById('year-a')?.value);
+    const yearB = parseInt(document.getElementById('year-b')?.value);
+    
+    if (!yearA || !yearB) {
+        console.warn('⚠️ 연도가 선택되지 않았습니다');
+        return;
+    }
+    
+    // 메트릭에 따른 텍스트 업데이트
+    const metricText = selectedMetric === 'area' ? '재배면적' : '생산량';
+    const labelText = selectedMetric === 'area' ? '면적' : '생산량';
+    
+    // 테이블 헤더들 업데이트
+    const headers = document.querySelectorAll('.comparison-table thead tr:first-child th');
+    headers.forEach((header, index) => {
+        if (header.textContent.includes('증감률')) {
+            header.innerHTML = `증감률 ((B-A)/A)<br>${labelText}`;
+        }
+    });
+    
+    console.log(`✅ 작목군별 TOP5 탭 증감 분석 표가 ${metricText}로 업데이트됨`);
 }
 
 // 증감 분석 표 데이터 업데이트 (기존)
@@ -2622,8 +2898,8 @@ function updateCropGroupTable(cropGroup, tableId, yearHeaderAId, yearHeaderBId) 
     
     console.log(`📊 ${cropGroup} 연도별 데이터: A=${dataA.length}개, B=${dataB.length}개`);
     
-    const gangwonDataA = dataA.filter(row => row.region === '강원도' || row.region === '강원');
-    const gangwonDataB = dataB.filter(row => row.region === '강원도' || row.region === '강원');
+    const gangwonDataA = dataA.filter(row => row.region === '강원');
+    const gangwonDataB = dataB.filter(row => row.region === '강원');
     
     // 여러 가지 전국 표기 방식 지원 (차트와 동일)
     const nationalDataA = dataA.filter(row => {
@@ -2839,7 +3115,7 @@ async function renderCropGroupTrendChart(cropGroup, canvasId, chartKey) {
     
     years.forEach(year => {
         const yearData = appState.data.raw.filter(row => row.year === year);
-        const gangwonYearData = yearData.filter(row => row.region === '강원도' || row.region === '강원');
+        const gangwonYearData = yearData.filter(row => row.region === '강원');
         // 여러 가지 전국 표기 방식 지원
         const nationalYearData = yearData.filter(row => {
             const region = row.region;
@@ -3001,8 +3277,8 @@ async function renderCropGroupTop5Chart(cropGroup, canvasId, chartKey) {
     const dataA = appState.data.raw.filter(row => row.year == yearA);
     const dataB = appState.data.raw.filter(row => row.year == yearB);
     
-    const gangwonDataA = dataA.filter(row => row.region === '강원도' || row.region === '강원');
-    const gangwonDataB = dataB.filter(row => row.region === '강원도' || row.region === '강원');
+    const gangwonDataA = dataA.filter(row => row.region === '강원');
+    const gangwonDataB = dataB.filter(row => row.region === '강원');
     
     // 전국 데이터 필터링 - 상세 디버깅
     console.log(`🔍 ${cropGroup} 전국 데이터 필터링 전 확인:`);
@@ -3436,7 +3712,8 @@ function calculateCompositionRate(cropValue, totalValue) {
 
 // 재배동향 분석 메인 함수
 function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전국') {
-    console.log(`🔍 재배동향 분석 시작: ${yearA} vs ${yearB}, ${metric}, ${region}`);
+    console.log(`🔍 재배동향 분석 시작: ${yearA} vs ${yearB}, 측정지표=${metric === 'area' ? '재배면적' : '생산량'}, ${region}`);
+    console.log(`📋 분석 매개변수:`, { yearA, yearB, metric, region });
     
     if (!appState.data.raw || appState.data.raw.length === 0) {
         console.error('❌ 데이터가 없습니다');
@@ -3493,17 +3770,17 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
         // 강원도 데이터만 필터링
         dataA = appState.data.raw.filter(row => {
             const rowRegion = row.region;
-            return row.year == yearA && rowRegion === '강원도';
+            return row.year == yearA && rowRegion === '강원';
         });
         
         dataB = appState.data.raw.filter(row => {
             const rowRegion = row.region;
-            return row.year == yearB && rowRegion === '강원도';
+            return row.year == yearB && rowRegion === '강원';
         });
         
-        console.log(`🔍 강원도 필터링 체크: yearA=${yearA}, yearB=${yearB}`);
-        console.log(`🔍 강원도 후보 데이터 A:`, [...new Set(appState.data.raw.filter(row => row.year == yearA).map(r => r.region))]);
-        console.log(`🔍 강원도 후보 데이터 B:`, [...new Set(appState.data.raw.filter(row => row.year == yearB).map(r => r.region))]);
+        console.log(`🔍 강원 필터링 체크: yearA=${yearA}, yearB=${yearB}`);
+        console.log(`🔍 강원 후보 데이터 A:`, [...new Set(appState.data.raw.filter(row => row.year == yearA).map(r => r.region))]);
+        console.log(`🔍 강원 후보 데이터 B:`, [...new Set(appState.data.raw.filter(row => row.year == yearB).map(r => r.region))]);
     } else {
         // 기타 지역의 경우 정확히 매칭
         dataA = appState.data.raw.filter(row => 
@@ -3516,6 +3793,39 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
     }
 
     console.log(`📊 ${region} 필터된 데이터: A=${dataA.length}, B=${dataB.length}`);
+    
+    // 데이터 샘플 확인
+    if (dataA.length > 0) {
+        console.log(`📋 ${region} A년도 샘플:`, {
+            cropName: dataA[0].cropName,
+            area: dataA[0].area,
+            production: dataA[0].production
+        });
+    }
+    
+    if (dataB.length > 0) {
+        console.log(`📋 ${region} B년도 샘플:`, {
+            cropName: dataB[0].cropName, 
+            area: dataB[0].area,
+            production: dataB[0].production
+        });
+    }
+    
+    // 강원 데이터가 0개일 때 상세 디버깅
+    if (region === '강원' && (dataA.length === 0 || dataB.length === 0)) {
+        console.log('🔍 강원 데이터 디버깅:');
+        console.log('📅 전체 연도 목록:', [...new Set(appState.data.raw.map(row => row.year))]);
+        console.log('🗺️ 전체 지역 목록:', [...new Set(appState.data.raw.map(row => row.region))]);
+        console.log(`📊 ${yearA}년 강원 데이터:`, appState.data.raw.filter(row => row.year == yearA && row.region === '강원').length);
+        console.log(`📊 ${yearB}년 강원 데이터:`, appState.data.raw.filter(row => row.year == yearB && row.region === '강원').length);
+        
+        if (appState.data.raw.filter(row => row.year == yearA && row.region === '강원').length > 0) {
+            console.log(`📋 ${yearA}년 강원 샘플:`, appState.data.raw.filter(row => row.year == yearA && row.region === '강원')[0]);
+        }
+        if (appState.data.raw.filter(row => row.year == yearB && row.region === '강원').length > 0) {
+            console.log(`📋 ${yearB}년 강원 샘플:`, appState.data.raw.filter(row => row.year == yearB && row.region === '강원')[0]);
+        }
+    }
     
     // 필터된 데이터 샘플 확인
     if (dataA.length > 0) {
@@ -3556,29 +3866,64 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
     }
 
     // 공통 작목에 대한 총합계 계산 (구성비 계산용)
-    const totalAreaA = dataA
+    const totalValueA = dataA
         .filter(row => commonCrops.includes(row.cropName))
-        .reduce((sum, row) => sum + (parseFloat(row.area) || 0), 0);
-    const totalAreaB = dataB
+        .reduce((sum, row) => {
+            const value = metric === 'area' ? 
+                (parseFloat(row.area) || 0) : 
+                (parseFloat(row.production) || 0);
+            return sum + value;
+        }, 0);
+    const totalValueB = dataB
         .filter(row => commonCrops.includes(row.cropName))
-        .reduce((sum, row) => sum + (parseFloat(row.area) || 0), 0);
+        .reduce((sum, row) => {
+            const value = metric === 'area' ? 
+                (parseFloat(row.area) || 0) : 
+                (parseFloat(row.production) || 0);
+            return sum + value;
+        }, 0);
 
-    console.log(`📊 ${region} 공통 작목 총합계: A=${totalAreaA}, B=${totalAreaB}`);
+    console.log(`📊 ${region} 공통 작목 총합계 (${metric === 'area' ? '재배면적' : '생산량'}): A=${totalValueA}, B=${totalValueB}`);
+
+    // 처리 통계 변수 초기화
+    let processedCount = 0;
+    let excludedCount = 0;
+    const excludedCrops = [];
 
     commonCrops.forEach(cropName => {
         const cropDataA = dataA.find(row => row.cropName === cropName);
         const cropDataB = dataB.find(row => row.cropName === cropName);
         
-        // 공통 작목이므로 둘 다 존재해야 함
-        const areaA = parseFloat(cropDataA?.area) || 0;
-        const areaB = parseFloat(cropDataB?.area) || 0;
+        if (!cropDataA || !cropDataB) {
+            excludedCount++;
+            excludedCrops.push(cropName);
+            return;
+        }
         
-        // 면적 변화 분석
-        const areaChange = calculateChangeRate(areaA, areaB);
+        // 선택된 측정항목에 따라 값 선택
+        const valueA = metric === 'area' ? 
+            (parseFloat(cropDataA?.area) || 0) : 
+            (parseFloat(cropDataA?.production) || 0);
+        const valueB = metric === 'area' ? 
+            (parseFloat(cropDataB?.area) || 0) : 
+            (parseFloat(cropDataB?.production) || 0);
         
-        // 구성비 변화 분석
-        const compositionA = calculateCompositionRate(areaA, totalAreaA);
-        const compositionB = calculateCompositionRate(areaB, totalAreaB);
+        // 생산량 분석 시 두 값이 모두 0이면 제외
+        if (metric === 'production' && valueA === 0 && valueB === 0) {
+            excludedCount++;
+            excludedCrops.push(cropName);
+            console.log(`⚠️ [${metric}] ${cropName}: 생산량 데이터가 모두 0이므로 분석에서 제외`);
+            return;
+        }
+        
+        processedCount++;
+        
+        // 값 변화 분석 (재배면적 또는 생산량)
+        const valueChange = calculateChangeRate(valueA, valueB);
+        
+        // 구성비 변화 분석 (총합계 대비 비율)
+        const compositionA = calculateCompositionRate(valueA, totalValueA);
+        const compositionB = calculateCompositionRate(valueB, totalValueB);
         const compositionChange = calculateChangeRate(compositionA, compositionB);
         
         // 작목군 식별
@@ -3588,26 +3933,52 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
         const cropInfo = {
             name: cropName,
             cropGroup: cropGroup,
-            areaA: areaA,
-            areaB: areaB,
+            valueA: valueA,
+            valueB: valueB,
             compositionA: compositionA,
             compositionB: compositionB,
-            areaChangeRate: areaChange.rate,
-            compositionChangeRate: compositionChange.rate
+            valueChangeRate: valueChange.rate,
+            compositionChangeRate: compositionChange.rate,
+            // 하위 호환성을 위한 기존 필드 유지
+            areaA: valueA,
+            areaB: valueB,
+            areaChangeRate: valueChange.rate
         };
 
-        // 면적 변화에 따른 분류
-        analysis.area[areaChange.category].push(cropInfo);
+        // 값 변화에 따른 분류 (재배면적 또는 생산량)
+        analysis.area[valueChange.category].push(cropInfo);
         
         // 구성비 변화에 따른 분류
         analysis.composition[compositionChange.category].push(cropInfo);
     });
+
+    // 분석 처리 통계 요약
+    console.log(`📊 ${region} ${metric === 'area' ? '재배면적' : '생산량'} 분석 처리 통계:`);
+    console.log(`  전체 공통작물: ${commonCrops.length}개`);
+    console.log(`  처리된 작물: ${processedCount}개`);
+    console.log(`  제외된 작물: ${excludedCount}개 (${excludedCrops.slice(0,3).join(', ')}${excludedCrops.length > 3 ? ' 등' : ''})`);
+    
+    // 분석 결과 요약 로그
+    console.log(`📊 ${region} ${metric === 'area' ? '재배면적' : '생산량'} 분석 결과:`);
+    console.log(`  증가: ${analysis.area.increase.length}개 (${analysis.area.increase.slice(0,3).map(c => c.name).join(', ')}${analysis.area.increase.length > 3 ? ' 등' : ''})`);
+    console.log(`  유지: ${analysis.area.maintain.length}개`);
+    console.log(`  감소: ${analysis.area.decrease.length}개 (${analysis.area.decrease.slice(0,3).map(c => c.name).join(', ')}${analysis.area.decrease.length > 3 ? ' 등' : ''})`);
 
     return analysis;
 }
 
 // 작목군별 작목 분류 함수
 function groupCropsByCategory(crops) {
+    if (!crops || !Array.isArray(crops)) {
+        console.warn('⚠️ groupCropsByCategory에 잘못된 데이터 전달:', crops);
+        return {
+            식량: [],
+            채소: [],
+            과수: [],
+            특약용작물: []
+        };
+    }
+    
     const groups = {
         식량: crops.filter(crop => crop.cropGroup === '식량'),
         채소: crops.filter(crop => crop.cropGroup === '채소'),
@@ -3621,6 +3992,7 @@ function groupCropsByCategory(crops) {
 // 재배동향 테이블 업데이트 함수
 function updateCultivationTrendTable(tableId, analysis, type = 'area') {
     console.log(`🔄 테이블 업데이트 시작: ${tableId}, type: ${type}`);
+    console.log(`📊 분석 데이터 미리보기:`, analysis?.area?.increase?.slice(0,3)?.map(crop => crop?.name || '알수없음'));
     
     const table = document.getElementById(tableId);
     if (!table) {
@@ -3645,6 +4017,11 @@ function updateCultivationTrendTable(tableId, analysis, type = 'area') {
 
     const data = analysis[type];
     console.log(`📊 ${type} 데이터:`, data);
+    
+    if (!data) {
+        console.error(`❌ analysis[${type}] 데이터가 없습니다. analysis 구조:`, analysis);
+        return;
+    }
 
     const categories = ['increase', 'maintain', 'decrease'];
     const labels = type === 'area' ? 
@@ -3653,19 +4030,36 @@ function updateCultivationTrendTable(tableId, analysis, type = 'area') {
 
     categories.forEach(category => {
         const crops = data[category] || [];
-        console.log(`📊 ${category} 카테고리 작목 수: ${crops.length}`, crops);
+        console.log(`📊 ${category} 카테고리 데이터:`, crops);
+        console.log(`📊 ${category} 데이터 타입:`, typeof crops, Array.isArray(crops));
         
-        const groups = groupCropsByCategory(crops);
+        // crops가 배열이 아닌 경우 처리
+        let cropArray = [];
+        if (Array.isArray(crops)) {
+            cropArray = crops;
+        } else if (crops && typeof crops === 'object') {
+            // crops가 객체인 경우 (예: { grain: [], vegetable: [], ... })
+            cropArray = Object.values(crops).flat();
+        }
+        
+        console.log(`📊 ${category} 처리된 배열:`, cropArray);
+        
+        const groups = groupCropsByCategory(cropArray);
         console.log(`📊 ${category} 작목군별 분류:`, groups);
         
         // 총 작목 수 (헤더 합계용)
-        const totalCount = crops.length;
+        const totalCount = cropArray.length;
         const totalSelector = `.${classPrefix}total-${category}`;
         const totalCell = table.querySelector(totalSelector);
         console.log(`🔍 총계 셀 찾기: ${totalSelector}`, totalCell ? '찾음' : '없음');
         if (totalCell) {
+            const oldTotal = totalCell.textContent;
             totalCell.textContent = totalCount;
-            console.log(`✅ 총계 셀 업데이트: ${totalCount}`);
+            console.log(`🔄 [${tableId}] 총계 ${category} 업데이트:`);
+            console.log(`  변경전: "${oldTotal}"`);
+            console.log(`  변경후: "${totalCount}"`);
+        } else {
+            console.error(`❌ [${tableId}] 총계 ${category} 셀을 찾을 수 없음: ${totalSelector}`);
         }
 
         // 작목군별 업데이트
@@ -3679,35 +4073,62 @@ function updateCultivationTrendTable(tableId, analysis, type = 'area') {
             
             if (cell) {
                 const count = groupCrops.length;
+                const oldContent = cell.textContent; // 변경 전 내용 저장
                 
                 if (count > 0) {
                     // 모든 작목명을 표시 (개수와 "외" 제거)
                     const cropNames = groupCrops.map(crop => crop.name);
                     const displayText = cropNames.join(', ');
                     cell.textContent = displayText;
-                    console.log(`✅ ${groupName} 셀 업데이트: ${displayText}`);
+                    console.log(`🔄 [${tableId}] ${groupName} ${category} 셀 업데이트:`);
+                    console.log(`  변경전: "${oldContent}"`);
+                    console.log(`  변경후: "${displayText}"`);
+                    console.log(`  작물수: ${count}개`);
                 } else {
                     cell.textContent = '-';
-                    console.log(`✅ ${groupName} 셀 업데이트: -`);
+                    console.log(`🔄 [${tableId}] ${groupName} ${category} 셀 업데이트:`);
+                    console.log(`  변경전: "${oldContent}"`);
+                    console.log(`  변경후: "-"`);
                 }
+            } else {
+                console.error(`❌ [${tableId}] ${groupName} ${category} 셀을 찾을 수 없음: ${cellSelector}`);
             }
         });
     });
 
     // 헤더에 작목군별 총 개수 업데이트
     updateTableHeaders(table, analysis, classPrefix);
+    
+    console.log(`✅ [${tableId}] 테이블 업데이트 완료 요약:`);
+    console.log(`  증가: ${analysis.area.increase.length}개 작물`);
+    console.log(`  유지: ${analysis.area.maintain.length}개 작물`);
+    console.log(`  감소: ${analysis.area.decrease.length}개 작물`);
 }
 
 // 테이블 헤더에 작목군별 총 개수 업데이트 함수
 function updateTableHeaders(table, analysis, classPrefix) {
     console.log(`🔄 헤더 업데이트 시작`);
+    console.log(`📊 analysis 구조:`, analysis);
+    
+    // analysis.area의 각 카테고리에서 작목 배열 추출
+    const extractCrops = (category) => {
+        if (!category) return [];
+        if (Array.isArray(category)) return category;
+        if (typeof category === 'object') {
+            // 객체인 경우 모든 값들을 배열로 변환하여 합침
+            return Object.values(category).flat();
+        }
+        return [];
+    };
     
     // 공통 작목 기준으로 작목군별 총 개수 계산
     const commonCrops = [
-        ...analysis.area.increase,
-        ...analysis.area.maintain, 
-        ...analysis.area.decrease
+        ...extractCrops(analysis.area.increase),
+        ...extractCrops(analysis.area.maintain), 
+        ...extractCrops(analysis.area.decrease)
     ];
+    
+    console.log(`📊 추출된 공통 작목:`, commonCrops);
     
     // 중복 제거 (같은 작목이 여러 카테고리에 있을 수 없지만 안전을 위해)
     const uniqueCrops = commonCrops.filter((crop, index, array) => 
@@ -3755,37 +4176,56 @@ function updateTableHeaders(table, analysis, classPrefix) {
 function updateCultivationSection() {
     const yearA = document.getElementById('cultivation-year-a')?.value;
     const yearB = document.getElementById('cultivation-year-b')?.value;
-    const metric = document.getElementById('cultivation-trend-metric')?.value || 'area';
+    const selectedMetric = document.getElementById('cultivation-trend-metric')?.value || 'area';
     
     if (!yearA || !yearB) {
         console.warn('⚠️ 연도가 선택되지 않았습니다');
         return;
     }
 
-    console.log(`🔄 재배동향 섹션 업데이트: ${yearA} vs ${yearB}, ${metric}`);
+    console.log(`🔄 재배동향 섹션 업데이트: ${yearA} vs ${yearB}, 표시 지표: ${selectedMetric}`);
+    console.log(`📊 측정항목 변경 감지: ${selectedMetric === 'area' ? '재배면적' : '생산량'} 기준으로 모든 카드 업데이트 시작`);
 
-    // 전국 데이터 분석
-    const nationalAnalysis = analyzeCultivationTrends(yearA, yearB, metric, '전국');
+    // 전국 데이터 분석 (선택된 측정 항목으로 분석)
+    console.log(`🔍 [카드1,2] 전국 데이터 ${selectedMetric} 분석 시작`);
+    const nationalAnalysis = analyzeCultivationTrends(yearA, yearB, selectedMetric, '전국');
     if (nationalAnalysis) {
-        // 재배면적 동향 테이블 업데이트
+        console.log(`✅ [카드1,2] 전국 ${selectedMetric} 분석 완료, 카드 업데이트 시작`);
+        
+        // 카드1: 전국 농산물 재배면적/생산량 동향 테이블 업데이트 (선택된 측정항목으로 분석)
+        console.log(`🔄 [카드1] cultivation-crop-change-analysis-table 업데이트 중 (${selectedMetric})`);
         updateCultivationTrendTable('cultivation-crop-change-analysis-table', nationalAnalysis, 'area');
         
-        // 구성비 동향 테이블 업데이트  
-        updateCultivationTrendTable('cultivation-crop-composition-analysis-table', nationalAnalysis, 'composition');
+        // 카드2: 전국 농산물 재배면적/생산량 구성비 동향 테이블 업데이트 (선택된 측정항목으로 분석)
+        console.log(`🔄 [카드2] cultivation-crop-composition-analysis-table 업데이트 중 (${selectedMetric})`);
+        updateCultivationTrendTable('cultivation-crop-composition-analysis-table', nationalAnalysis, 'area');
+        
+        console.log(`✅ [카드1,2] 테이블 업데이트 완료`);
+    } else {
+        console.error(`❌ [카드1,2] 전국 ${selectedMetric} 분석 실패`);
     }
 
-    // 강원도 데이터 분석
-    const gangwonAnalysis = analyzeCultivationTrends(yearA, yearB, metric, '강원');
+    // 강원도 데이터 분석 (선택된 측정 항목으로 분석)
+    console.log(`🔍 [카드3,4] 강원도 데이터 ${selectedMetric} 분석 시작`);
+    const gangwonAnalysis = analyzeCultivationTrends(yearA, yearB, selectedMetric, '강원');
     if (gangwonAnalysis) {
-        // 강원 재배면적 동향 테이블 업데이트
+        console.log(`✅ [카드3,4] 강원도 ${selectedMetric} 분석 완료, 카드 업데이트 시작`);
+        
+        // 카드3: 강원 농산물 재배면적/생산량 동향 테이블 업데이트 (선택된 측정항목으로 분석)
+        console.log(`🔄 [카드3] cultivation-gangwon-crop-change-analysis-table 업데이트 중 (${selectedMetric})`);
         updateCultivationTrendTable('cultivation-gangwon-crop-change-analysis-table', gangwonAnalysis, 'area');
         
-        // 강원 구성비 동향 테이블 업데이트
-        updateCultivationTrendTable('cultivation-gangwon-crop-composition-analysis-table', gangwonAnalysis, 'composition');
+        // 카드4: 강원 농산물 재배면적/생산량 구성비 동향 테이블 업데이트 (선택된 측정항목으로 분석)
+        console.log(`🔄 [카드4] cultivation-gangwon-crop-composition-analysis-table 업데이트 중 (${selectedMetric})`);
+        updateCultivationTrendTable('cultivation-gangwon-crop-composition-analysis-table', gangwonAnalysis, 'area');
+        
+        console.log(`✅ [카드3,4] 테이블 업데이트 완료`);
+    } else {
+        console.error(`❌ [카드3,4] 강원도 ${selectedMetric} 분석 실패`);
     }
 
     // 헤더 텍스트 업데이트
-    updateCultivationHeaders(metric);
+    updateCultivationHeaders(selectedMetric);
 }
 
 // 헤더 텍스트 업데이트 함수
@@ -3793,15 +4233,27 @@ function updateCultivationHeaders(metric) {
     const isArea = metric === 'area';
     const metricText = isArea ? '재배면적' : '생산량';
     
+    console.log(`🏷️ 헤더 업데이트 시작: ${metricText} 기준으로 모든 카드 제목 변경`);
+    
     // 카드 제목 업데이트
     const cardTitle = document.getElementById('cultivation-card-title');
     if (cardTitle) {
         cardTitle.textContent = `전국 농산물 ${metricText} 동향`;
     }
     
+    const card2Title = document.getElementById('cultivation-card2-title');
+    if (card2Title) {
+        card2Title.textContent = `전국 농산물 ${metricText} 구성비 동향`; // 카드2도 선택된 측정항목에 따라 변경
+    }
+    
     const gangwonCardTitle = document.getElementById('cultivation-gangwon-area-card-title');
     if (gangwonCardTitle) {
         gangwonCardTitle.textContent = `강원 농산물 ${metricText} 동향`;
+    }
+    
+    const card4Title = document.getElementById('cultivation-card4-title');
+    if (card4Title) {
+        card4Title.textContent = `강원 농산물 ${metricText} 구성비 동향`; // 카드4도 선택된 측정항목에 따라 변경
     }
     
     
@@ -3840,7 +4292,13 @@ function initCultivationEventListeners() {
     }
     
     if (metricSelect) {
-        metricSelect.addEventListener('change', updateCultivationSection);
+        metricSelect.addEventListener('change', (event) => {
+            const newMetric = event.target.value;
+            console.log(`🎯 측정항목 변경 감지: ${newMetric === 'area' ? '재배면적' : '생산량'}으로 변경됨`);
+            console.log(`🔄 updateCultivationSection 함수 호출 시작`);
+            updateCultivationSection();
+            console.log(`✅ updateCultivationSection 함수 호출 완료`);
+        });
     }
 
     console.log('✅ 재배동향 이벤트 리스너 초기화 완료');
@@ -3881,12 +4339,18 @@ document.addEventListener('DOMContentLoaded', function() {
 function setupCardAreaFilterSliders() {
     console.log('🎚️ 카드별 면적 필터 슬라이더 설정 시작');
     
+    // 이미 설정되었는지 확인
+    if (window.cardSlidersSetup) {
+        console.log('✅ 카드 슬라이더가 이미 설정됨. 건너뛰기');
+        return;
+    }
+    
     const cardConfigs = [
         {
             id: 'card1',
             sliderId: 'card1-area-filter-slider',
             valueId: 'card1-area-value',
-            countId: 'card1-filtered-count',
+            countId: null, // card1에는 카운트 요소가 없음
             tableId: 'cultivation-crop-change-analysis-table',
             type: 'area',
             unit: 'ha'
@@ -3895,10 +4359,10 @@ function setupCardAreaFilterSliders() {
             id: 'card2',
             sliderId: 'card2-area-filter-slider',
             valueId: 'card2-area-value',
-            countId: 'card2-filtered-count',
+            countId: null, // card2에는 카운트 요소가 없음
             tableId: 'cultivation-crop-composition-analysis-table',
-            type: 'composition',
-            unit: '%'
+            type: 'area',       // composition에서 area로 변경
+            unit: 'ha'          // %에서 ha로 변경
         },
         {
             id: 'card3',
@@ -3915,14 +4379,17 @@ function setupCardAreaFilterSliders() {
             valueId: 'card4-area-value',
             countId: 'card4-filtered-count',
             tableId: 'cultivation-gangwon-crop-composition-analysis-table',
-            type: 'composition',
-            unit: '%'
+            type: 'area',
+            unit: 'ha'
         }
     ];
     
     cardConfigs.forEach(config => {
         setupSingleCardFilter(config);
     });
+    
+    // 설정 완료 플래그 설정
+    window.cardSlidersSetup = true;
     
     console.log('✅ 모든 카드별 면적 필터 슬라이더 설정 완료');
 }
@@ -3931,31 +4398,63 @@ function setupCardAreaFilterSliders() {
 function setupSingleCardFilter(config) {
     const slider = document.getElementById(config.sliderId);
     const valueElement = document.getElementById(config.valueId);
-    const countElement = document.getElementById(config.countId);
+    const countElement = config.countId ? document.getElementById(config.countId) : null;
     const presetBtns = document.querySelectorAll(`[data-card="${config.id}"]`);
     
-    if (!slider || !valueElement || !countElement) {
-        console.error(`❌ ${config.id} 슬라이더 요소를 찾을 수 없습니다`);
+    if (!slider || !valueElement) {
+        console.warn(`⚠️ ${config.id} 슬라이더 요소를 찾을 수 없습니다. 재시도 중...`);
+        
+        // 500ms 후 재시도
+        setTimeout(() => {
+            setupSingleCardFilter(config);
+        }, 500);
         return;
+    }
+    
+    // countId가 null이면 카운트 요소가 의도적으로 없는 것으로 처리
+    if (config.countId && !countElement) {
+        console.warn(`⚠️ ${config.id} 카운트 요소를 찾을 수 없습니다. 카운트 표시 없이 진행합니다.`);
     }
     
     // 슬라이더 변경 이벤트
     slider.addEventListener('input', function(e) {
         const value = parseInt(e.target.value);
+        console.log(`🎚️ ${config.id} 슬라이더 값 변경: ${value}`);
         updateCardFilterDisplay(config, value);
         applyCardAreaFilter(config, value);
         updateCardPresetButtons(config.id, value);
     });
     
-    // 프리셋 버튼 이벤트
+    // 프리셋 버튼 이벤트 (누를 때마다 증가)
     presetBtns.forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            const value = parseInt(this.dataset.value);
-            slider.value = value;
-            updateCardFilterDisplay(config, value);
-            applyCardAreaFilter(config, value);
-            updateCardPresetButtons(config.id, value);
+            const btnValue = parseInt(this.dataset.value);
+            const currentValue = parseInt(slider.value);
+            let newValue;
+            
+            console.log(`🔘 ${config.id} 프리셋 버튼 클릭: ${btnValue}, 현재값: ${currentValue}`);
+            
+            if (btnValue === 0) {
+                // "전체" 버튼은 항상 0으로 리셋
+                newValue = 0;
+            } else {
+                // 다른 버튼들은 해당 값만큼 계속 증가
+                newValue = currentValue + btnValue;
+                
+                // 슬라이더 최대값을 넘지 않도록 제한
+                const maxValue = parseInt(slider.max);
+                if (newValue > maxValue) {
+                    newValue = maxValue;
+                }
+            }
+            
+            console.log(`➡️ ${config.id} 새로운 값: ${newValue}`);
+            
+            slider.value = newValue;
+            updateCardFilterDisplay(config, newValue);
+            applyCardAreaFilter(config, newValue);
+            updateCardPresetButtons(config.id, newValue);
         });
     });
     
@@ -3990,9 +4489,17 @@ function updateCardPresetButtons(cardId, currentValue) {
     const presetBtns = document.querySelectorAll(`[data-card="${cardId}"]`);
     presetBtns.forEach(btn => {
         const btnValue = parseInt(btn.dataset.value);
-        if (btnValue === currentValue) {
-            btn.classList.add('active');
+        
+        // "전체" 버튼(값이 0)은 현재 값이 0일 때만 활성화
+        if (btnValue === 0) {
+            if (currentValue === 0) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
         } else {
+            // 다른 버튼들은 누적 증가 방식이므로 항상 비활성화 상태로 표시
+            // (사용자가 언제든 클릭하여 증가시킬 수 있음을 나타내기 위해)
             btn.classList.remove('active');
         }
     });
@@ -4002,7 +4509,8 @@ function updateCardPresetButtons(cardId, currentValue) {
 function applyCardAreaFilter(config, value) {
     console.log(`🔍 ${config.id} 필터 적용: ${value}${config.unit} 이상`);
     
-    filterCardTable(config, value);
+    // 필터링된 데이터로 테이블 업데이트
+    updateFilteredCultivationTable(config, value);
 }
 
 // 카드별 테이블에 필터 적용
@@ -4059,21 +4567,1465 @@ function getCardFilteredCount(config, minValue) {
     
     if (!yearA || !yearB || !appState.data.raw) return 0;
     
-    const selectedMetric = document.getElementById('cultivation-trend-metric')?.value || 'area';
     const isGangwon = config.id === 'card3' || config.id === 'card4';
     const dataFilter = isGangwon ? 
-        (row => row.year === yearA && (row.region === '강원도' || row.region === '강원')) :
+        (row => row.year === yearA && row.region === '강원') :
         (row => row.year === yearA);
     
     const dataA = appState.data.raw.filter(dataFilter);
     
     let count = 0;
     dataA.forEach(row => {
-        const value = selectedMetric === 'area' ? (row.area || 0) : (row.production || 0);
-        if (value >= minValue) {
+        // 슬라이더 필터는 항상 재배면적 기준
+        const area = row.area || 0;
+        if (area >= minValue) {
             count++;
         }
     });
     
     return count;
+}
+
+// 카테고리에서 작목 배열 추출하는 헬퍼 함수
+function extractCropsFromCategory(category) {
+    if (!category) return [];
+    if (Array.isArray(category)) return category;
+    if (typeof category === 'object') {
+        return Object.values(category).flat();
+    }
+    return [];
+}
+
+// 필터링된 데이터로 재배동향 테이블 업데이트
+function updateFilteredCultivationTable(config, filterValue) {
+    console.log(`🔄 ${config.id} 테이블 필터링 업데이트: ${filterValue}${config.unit} 이상`);
+    
+    // 현재 선택된 연도와 측정 항목 가져오기
+    const yearA = parseInt(document.getElementById('cultivation-year-a')?.value);
+    const yearB = parseInt(document.getElementById('cultivation-year-b')?.value);
+    const metric = document.getElementById('cultivation-trend-metric')?.value || 'area';
+    
+    console.log(`📅 선택된 연도: A=${yearA}, B=${yearB}, 측정항목=${metric}`);
+    
+    if (!yearA || !yearB) {
+        console.warn('⚠️ 연도가 선택되지 않았습니다');
+        return;
+    }
+    
+    // 지역 결정 (card3, card4는 강원도)
+    const region = (config.id === 'card3' || config.id === 'card4') ? '강원' : '전국';
+    console.log(`🗺️ 카드ID: ${config.id}, 결정된 지역: ${region}, 테이블ID: ${config.tableId}`);
+    console.log(`🗺️ 카드ID 체크: card3인가? ${config.id === 'card3'}, card4인가? ${config.id === 'card4'}`);
+    
+    // 필터값이 0이면 원본 함수 사용, 0보다 크면 필터링 함수 사용
+    let analysis;
+    if (filterValue === 0) {
+        console.log('🔄 필터값이 0이므로 원본 analyzeCultivationTrends 사용');
+        analysis = analyzeCultivationTrends(yearA, yearB, metric, region);
+    } else {
+        console.log('🔄 필터값이 있으므로 analyzeCultivationTrendsWithFilter 사용');
+        
+        // 디버깅을 위해 원본 결과와 비교
+        console.log(`🔍 비교 분석 시작 - 입력값: yearA=${yearA}, yearB=${yearB}, metric=${metric}, region=${region}, filter=${filterValue}`);
+        
+        const originalAnalysis = analyzeCultivationTrends(yearA, yearB, metric, region);
+        const noFilterAnalysis = analyzeCultivationTrendsWithFilter(yearA, yearB, metric, region, 0, config.unit);
+        analysis = analyzeCultivationTrendsWithFilter(yearA, yearB, metric, region, filterValue, config.unit);
+        
+        console.log('🔍 원본 분석 결과 (analyzeCultivationTrends):', originalAnalysis);
+        console.log('🔍 필터0 분석 결과 (analyzeCultivationTrendsWithFilter filter=0):', noFilterAnalysis);
+        console.log('🔍 필터링 분석 결과 (analyzeCultivationTrendsWithFilter filter>0):', analysis);
+        
+        // 증가 카테고리 비교
+        if (originalAnalysis && originalAnalysis.area && analysis && analysis.area) {
+            const originalIncrease = extractCropsFromCategory(originalAnalysis.area.increase);
+            const filteredIncrease = extractCropsFromCategory(analysis.area.increase);
+            
+            console.log('📈 원본 증가 작목:', originalIncrease.map(c => c.name));
+            console.log('📈 필터링 후 증가 작목:', filteredIncrease.map(c => c.name));
+            
+            // 차이점 찾기
+            const lost = originalIncrease.filter(orig => !filteredIncrease.find(filt => filt.name === orig.name));
+            const moved = lost.length > 0 ? '이동됨' : '변화없음';
+            console.log('⚠️ 증가에서 사라진 작목:', lost.map(c => c.name), moved);
+        }
+    }
+    
+    if (analysis) {
+        console.log(`✅ 분석 완료:`, analysis);
+        // 테이블 타입 결정 (card2, card4는 구성비 테이블)
+        const tableType = (config.id === 'card2' || config.id === 'card4') ? 'composition' : 'area';
+        console.log(`📋 테이블 타입: ${tableType}`);
+        updateCultivationTrendTable(config.tableId, analysis, tableType);
+    } else {
+        console.error('❌ 분석 결과가 없습니다');
+    }
+}
+
+// 필터링 기능이 추가된 재배동향 분석 함수
+function analyzeCultivationTrendsWithFilter(yearA, yearB, metric = 'area', region = '전국', filterValue = 0, filterUnit = 'ha') {
+    console.log(`🔍 필터링된 재배동향 분석: ${yearA} vs ${yearB}, ${metric}, ${region}, ${filterValue}${filterUnit} 이상`);
+    
+    if (!appState.data.raw || appState.data.raw.length === 0) {
+        console.error('❌ 데이터가 없습니다');
+        return null;
+    }
+    
+    // 지역 필터 함수
+    let regionFilter;
+    if (region === '강원') {
+        regionFilter = (row) => row.region === '강원';
+    } else if (region === '전국') {
+        // DB의 전국 데이터만 필터링 (원본 함수와 동일한 로직)
+        regionFilter = (row) => {
+            const rowRegion = row.region;
+            return rowRegion === '전국' || rowRegion === '전체' || rowRegion === 'national' || rowRegion === 'National' || rowRegion === '합계';
+        };
+    } else {
+        regionFilter = (row) => true; // 기타 지역은 모든 지역
+    }
+    
+    // 연도별 데이터 필터링 (필터 적용 전에 먼저 연도와 지역만 필터링)
+    const dataA = appState.data.raw.filter(row => {
+        return row.year == yearA && regionFilter(row);
+    });
+    
+    const dataB = appState.data.raw.filter(row => {
+        return row.year == yearB && regionFilter(row);
+    });
+    
+    console.log(`🗺️ 지역 필터링 결과: ${region} - A년도 ${dataA.length}개, B년도 ${dataB.length}개`);
+    
+    // 디버깅: 강원도 데이터가 없을 때 모든 지역명 확인
+    if (region === '강원' && (dataA.length === 0 || dataB.length === 0)) {
+        console.log('🔍 강원도 데이터 디버깅 - 모든 지역명 확인:');
+        const allRegions = [...new Set(appState.data.raw.map(row => row.region))];
+        console.log('📋 DB에 있는 모든 지역명:', allRegions);
+        
+        const yearAData = appState.data.raw.filter(row => row.year == yearA);
+        const yearBData = appState.data.raw.filter(row => row.year == yearB);
+        console.log(`📅 ${yearA}년 지역별 데이터:`, [...new Set(yearAData.map(row => row.region))]);
+        console.log(`📅 ${yearB}년 지역별 데이터:`, [...new Set(yearBData.map(row => row.region))]);
+    }
+    
+    if (dataA.length > 0) {
+        console.log(`🗺️ ${region} A년도 샘플:`, dataA[0]);
+    }
+    if (dataB.length > 0) {
+        console.log(`🗺️ ${region} B년도 샘플:`, dataB[0]);
+    }
+    
+    // 공통 작목들 찾기 (필터 적용 전)
+    const cropsA = new Set(dataA.map(row => row.cropName));
+    const cropsB = new Set(dataB.map(row => row.cropName));
+    const commonCrops = [...cropsA].filter(crop => cropsB.has(crop));
+    
+    console.log(`📊 공통 작목: ${commonCrops.length}개`);
+    
+    // 작목군별로 데이터 분석
+    const cropGroups = ['식량', '채소', '과수', '특약용작물'];
+    const results = {
+        increase: { total: 0, grain: [], vegetable: [], fruit: [], special: [] },
+        maintain: { total: 0, grain: [], vegetable: [], fruit: [], special: [] },
+        decrease: { total: 0, grain: [], vegetable: [], fruit: [], special: [] }
+    };
+    
+    let processedCount = 0;
+    let excludedCount = 0;
+    const excludedCrops = [];
+    
+    commonCrops.forEach(cropName => {
+        const cropA = dataA.find(row => row.cropName === cropName);
+        const cropB = dataB.find(row => row.cropName === cropName);
+        
+        if (!cropA || !cropB) return;
+        
+        const valueA = metric === 'area' ? (cropA.area || 0) : (cropA.production || 0);
+        const valueB = metric === 'area' ? (cropB.area || 0) : (cropB.production || 0);
+        
+        // 생산량 기준 분석일 때, 생산량 데이터가 모두 0이거나 없는 경우 제외
+        if (metric === 'production' && (valueA === 0 && valueB === 0)) {
+            excludedCount++;
+            excludedCrops.push(cropName);
+            console.log(`⚠️ [${metric}] ${cropName}: 생산량 데이터가 모두 0이므로 분석에서 제외`);
+            return;
+        }
+        
+        processedCount++;
+        
+        // 디버깅: 측정항목별 값 비교 로그 (모든 작물의 첫 5개는 항상 로그 출력)
+        const shouldLog = Math.random() < 0.2 || cropName?.includes('인삼') || cropName?.includes('담배') || commonCrops.indexOf(cropName) < 5;
+        if (shouldLog) {
+            console.log(`📊 [${metric}] ${cropName}:`);
+            console.log(`  A년도: ${metric}=${valueA} (area=${cropA.area}, production=${cropA.production})`);
+            console.log(`  B년도: ${metric}=${valueB} (area=${cropB.area}, production=${cropB.production})`);
+            console.log(`  변화율: ${valueA === 0 ? '계산불가' : ((valueB - valueA) / valueA * 100).toFixed(1)}%`);
+            console.log(`  선택된 값: ${metric === 'area' ? 'area 필드 사용' : 'production 필드 사용'}`);
+        }
+        
+        // 증감 판정 (필터와 상관없이 동일하게 계산)
+        const changeRate = valueA === 0 ? 0 : ((valueB - valueA) / valueA) * 100;
+        let category;
+        if (changeRate > 5) category = 'increase';
+        else if (changeRate < -5) category = 'decrease';
+        else category = 'maintain';
+        
+        // 필터링 조건 확인: 슬라이더는 항상 재배면적 기준으로 필터링
+        // "최소 재배면적" 필터는 현재(B년도) 재배면적 기준으로 적용
+        if (filterValue > 0) {
+            const areaB = cropB.area || 0; // 항상 재배면적으로 필터링
+            if (areaB < filterValue) {
+                console.log(`🚫 재배면적 필터링으로 제외: ${cropName} (B년도 재배면적: ${areaB}ha < 필터: ${filterValue}ha)`);
+                return; // 필터 조건을 만족하지 않으면 제외
+            }
+        }
+        
+        // 데이터 유효성 검증
+        if (!cropName || cropName === undefined || cropName === null) {
+            console.error('❌ 잘못된 작목명:', cropName, 'cropA:', cropA, 'cropB:', cropB);
+            return;
+        }
+        
+        console.log(`📈 ${cropName}: ${valueA} → ${valueB} (${changeRate.toFixed(1)}%) → ${category} [필터 통과]`);
+        
+        // 작목군 분류
+        const cropGroup = cropA.cropGroup || '기타';
+        let groupKey;
+        if (cropGroup.includes('식량')) groupKey = 'grain';
+        else if (cropGroup.includes('채소')) groupKey = 'vegetable';
+        else if (cropGroup.includes('과수')) groupKey = 'fruit';
+        else if (cropGroup.includes('특약') || cropGroup.includes('특용')) groupKey = 'special';
+        else groupKey = 'special'; // 기타는 특약용으로 분류
+        
+        results[category][groupKey].push({
+            name: cropName,
+            valueA,
+            valueB,
+            changeRate,
+            cropGroup
+        });
+        results[category].total++;
+    });
+    
+    console.log('🔍 analyzeCultivationTrendsWithFilter 결과:', results);
+    
+    // 원본 함수와 동일한 구조로 변환 (배열로)
+    const convertToArray = (category) => {
+        const allCrops = [
+            ...category.grain,
+            ...category.vegetable,
+            ...category.fruit,
+            ...category.special
+        ];
+        return allCrops;
+    };
+    
+    const formattedResults = {
+        increase: convertToArray(results.increase),
+        maintain: convertToArray(results.maintain),
+        decrease: convertToArray(results.decrease)
+    };
+    
+    console.log('🔍 변환된 결과 (배열 형식):', formattedResults);
+    
+    // updateCultivationTrendTable이 기대하는 구조로 변환
+    return {
+        area: formattedResults,
+        composition: formattedResults
+    };
+}
+
+// ========== 순위분석 기능 ==========
+
+// 순위분석 초기화
+function initRankingSection() {
+    console.log('🏆 순위분석 섹션 초기화 시작');
+    setupRankingControls();
+    initRankingEventListeners();
+}
+
+// 순위분석 컨트롤 설정
+function setupRankingControls() {
+    const year1Select = document.getElementById('ranking-year-1');
+    const year2Select = document.getElementById('ranking-year-2');
+    
+    if (year1Select && year2Select && appState.data.processed.years) {
+        const availableYears = [...appState.data.processed.years].sort((a, b) => a - b);
+        
+        // 년도 옵션 추가
+        [year1Select, year2Select].forEach(select => {
+            select.innerHTML = '';
+            availableYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year + '년';
+                select.appendChild(option);
+            });
+        });
+        
+        // 기본값 설정 (첫 번째 연도와 마지막 연도)
+        if (availableYears.length >= 2) {
+            year1Select.value = availableYears[0];
+            year2Select.value = availableYears[availableYears.length - 1];
+        }
+        
+        console.log('📅 순위분석 연도 선택기 초기화 완료');
+    }
+}
+
+// 순위분석 이벤트 리스너
+function initRankingEventListeners() {
+    const year1Select = document.getElementById('ranking-year-1');
+    const year2Select = document.getElementById('ranking-year-2');
+    const metricSelect = document.getElementById('ranking-metric');
+    
+    [year1Select, year2Select, metricSelect].forEach(select => {
+        if (select) {
+            select.addEventListener('change', updateRankingTables);
+        }
+    });
+    
+    console.log('🏆 순위분석 이벤트 리스너 초기화 완료');
+}
+
+// 순위분석 테이블 업데이트
+function updateRankingTables() {
+    const year1 = parseInt(document.getElementById('ranking-year-1')?.value);
+    const year2 = parseInt(document.getElementById('ranking-year-2')?.value);
+    const metric = document.getElementById('ranking-metric')?.value || 'area';
+    
+    if (!year1 || !year2) {
+        console.warn('⚠️ 연도가 선택되지 않았습니다');
+        return;
+    }
+    
+    console.log(`🏆 순위분석 업데이트: ${year1}년 vs ${year2}년, ${metric}`);
+    
+    // 헤더 업데이트
+    updateRankingHeaders(year1, year2, metric);
+    
+    // 각 테이블 데이터 생성 및 업데이트
+    updateNationalRankingTable(year1, year2, metric);
+    updateGangwonRankingTable(year1, year2, metric);
+    updateShareRankingTable(year1, year2, metric);
+}
+
+// 순위분석 헤더 업데이트
+function updateRankingHeaders(year1, year2, metric) {
+    const metricText = metric === 'area' ? '재배면적' : '생산량';
+    const unit = metric === 'area' ? 'ha' : '톤';
+    
+    // 테이블 제목 업데이트
+    document.getElementById('national-ranking-title').textContent = `전국 ${metricText}`;
+    document.getElementById('gangwon-ranking-title').textContent = `강원 ${metricText}`;
+    document.getElementById('share-ranking-title').textContent = '전국대비 점유율';
+    
+    // 헤더 연도 업데이트
+    ['national', 'gangwon', 'share'].forEach(prefix => {
+        document.getElementById(`${prefix}-year1-header`).textContent = `${year1}년`;
+        document.getElementById(`${prefix}-year2-header`).textContent = `${year2}년`;
+    });
+    
+    // 값 헤더 업데이트
+    ['national', 'gangwon'].forEach(prefix => {
+        document.getElementById(`${prefix}-value1-header`).textContent = `${metricText} (${unit})`;
+        document.getElementById(`${prefix}-value2-header`).textContent = `${metricText} (${unit})`;
+    });
+    
+    // 필터 안내문구 업데이트
+    const filterText = `${year2}년값 전국 기준 재배면적 100ha 이상`;
+    document.getElementById('ranking-filter-text').textContent = filterText;
+}
+
+// 전국 순위 테이블 업데이트
+function updateNationalRankingTable(year1, year2, metric) {
+    const data1 = getRankedData(year1, '전국', metric);
+    const data2 = getRankedData(year2, '전국', metric);
+    const tbody = document.getElementById('national-ranking-tbody');
+    
+    renderRankingTableBody(tbody, data1, data2, metric, 50);
+}
+
+// 강원 순위 테이블 업데이트
+function updateGangwonRankingTable(year1, year2, metric) {
+    const data1 = getRankedData(year1, '강원', metric);
+    const data2 = getRankedData(year2, '강원', metric);
+    const tbody = document.getElementById('gangwon-ranking-tbody');
+    
+    renderRankingTableBody(tbody, data1, data2, metric, 50);
+}
+
+// 점유율 순위 테이블 업데이트
+function updateShareRankingTable(year1, year2, metric) {
+    const shareData1 = getShareRankedData(year1, metric);
+    const shareData2 = getShareRankedData(year2, metric);
+    const tbody = document.getElementById('share-ranking-tbody');
+    
+    renderShareRankingTableBody(tbody, shareData1, shareData2, 50);
+}
+
+// 순위 데이터 생성
+function getRankedData(year, region, metric) {
+    const data = appState.data.raw.filter(row => 
+        row.year == year && row.region === region
+    );
+    
+    // 전국 기준 재배면적 100ha 이상 필터링을 위해 전국 데이터도 가져오기
+    const year2 = parseInt(document.getElementById('ranking-year-2')?.value);
+    const nationalDataForFilter = appState.data.raw.filter(row => 
+        row.year == year2 && row.region === '전국'
+    );
+    
+    return data
+        .map(row => ({
+            cropName: row.cropName,
+            value: metric === 'area' ? (row.area || 0) : (row.production || 0)
+        }))
+        .filter(item => {
+            // 값이 0보다 큰지 확인
+            if (item.value <= 0) return false;
+            
+            // 해당 작목이 선택연도 2의 전국 기준으로 재배면적 100ha 이상인지 확인
+            const nationalCrop = nationalDataForFilter.find(row => row.cropName === item.cropName);
+            const nationalArea = nationalCrop ? (nationalCrop.area || 0) : 0;
+            
+            return nationalArea >= 100;
+        })
+        .sort((a, b) => b.value - a.value)
+        .map((item, index) => ({
+            ...item,
+            rank: index + 1
+        }));
+}
+
+// 점유율 순위 데이터 생성
+function getShareRankedData(year, metric) {
+    const nationalData = appState.data.raw.filter(row => 
+        row.year == year && row.region === '전국'
+    );
+    const gangwonData = appState.data.raw.filter(row => 
+        row.year == year && row.region === '강원'
+    );
+    
+    // 전국 기준 재배면적 100ha 이상 필터링을 위해 선택연도 2의 전국 데이터도 가져오기
+    const year2 = parseInt(document.getElementById('ranking-year-2')?.value);
+    const nationalDataForFilter = appState.data.raw.filter(row => 
+        row.year == year2 && row.region === '전국'
+    );
+    
+    const shareData = [];
+    
+    gangwonData.forEach(gangwonRow => {
+        const nationalRow = nationalData.find(row => row.cropName === gangwonRow.cropName);
+        if (nationalRow) {
+            const gangwonValue = metric === 'area' ? (gangwonRow.area || 0) : (gangwonRow.production || 0);
+            const nationalValue = metric === 'area' ? (nationalRow.area || 0) : (nationalRow.production || 0);
+            
+            if (nationalValue > 0 && gangwonValue > 0) {
+                // 해당 작목이 선택연도 2의 전국 기준으로 재배면적 100ha 이상인지 확인
+                const nationalCropForFilter = nationalDataForFilter.find(row => row.cropName === gangwonRow.cropName);
+                const nationalAreaForFilter = nationalCropForFilter ? (nationalCropForFilter.area || 0) : 0;
+                
+                if (nationalAreaForFilter >= 100) {
+                    const shareRate = (gangwonValue / nationalValue) * 100;
+                    shareData.push({
+                        cropName: gangwonRow.cropName,
+                        shareRate: shareRate
+                    });
+                }
+            }
+        }
+    });
+    
+    return shareData
+        .sort((a, b) => b.shareRate - a.shareRate)
+        .map((item, index) => ({
+            ...item,
+            rank: index + 1
+        }));
+}
+
+// 순위 테이블 바디 렌더링
+function renderRankingTableBody(tbody, data1, data2, metric, maxRows = 50) {
+    tbody.innerHTML = '';
+    
+    // 두 연도의 모든 작목명 수집
+    const allCrops = new Set([
+        ...data1.map(item => item.cropName),
+        ...data2.map(item => item.cropName)
+    ]);
+    
+    // data2 기준으로 정렬하여 최대 maxRows개만 표시
+    const cropList = Array.from(allCrops)
+        .map(cropName => {
+            const item1 = data1.find(item => item.cropName === cropName);
+            const item2 = data2.find(item => item.cropName === cropName);
+            return {
+                cropName,
+                data1: item1 || { value: 0, rank: '-' },
+                data2: item2 || { value: 0, rank: '-' }
+            };
+        })
+        .sort((a, b) => {
+            const aValue = typeof a.data2.value === 'number' ? a.data2.value : 0;
+            const bValue = typeof b.data2.value === 'number' ? b.data2.value : 0;
+            return bValue - aValue;
+        })
+        .slice(0, maxRows);
+    
+    cropList.forEach(({ cropName, data1: item1, data2: item2 }) => {
+        const row = document.createElement('tr');
+        
+        const unit = metric === 'area' ? 'ha' : '톤';
+        const value1 = typeof item1.value === 'number' ? item1.value.toLocaleString() : '0';
+        const value2 = typeof item2.value === 'number' ? item2.value.toLocaleString() : '0';
+        
+        row.innerHTML = `
+            <td title="${cropName}">${cropName}</td>
+            <td class="value-cell">${value1}</td>
+            <td class="rank-cell ${getRankClass(item1.rank)}">${item1.rank}</td>
+            <td class="value-cell">${value2}</td>
+            <td class="rank-cell ${getRankClass(item2.rank)}">${item2.rank}</td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// 점유율 테이블 바디 렌더링
+function renderShareRankingTableBody(tbody, data1, data2, maxRows = 50) {
+    tbody.innerHTML = '';
+    
+    // 두 연도의 모든 작목명 수집
+    const allCrops = new Set([
+        ...data1.map(item => item.cropName),
+        ...data2.map(item => item.cropName)
+    ]);
+    
+    // data2 기준으로 정렬하여 최대 maxRows개만 표시
+    const cropList = Array.from(allCrops)
+        .map(cropName => {
+            const item1 = data1.find(item => item.cropName === cropName);
+            const item2 = data2.find(item => item.cropName === cropName);
+            return {
+                cropName,
+                data1: item1 || { shareRate: 0, rank: '-' },
+                data2: item2 || { shareRate: 0, rank: '-' }
+            };
+        })
+        .sort((a, b) => {
+            const aValue = typeof a.data2.shareRate === 'number' ? a.data2.shareRate : 0;
+            const bValue = typeof b.data2.shareRate === 'number' ? b.data2.shareRate : 0;
+            return bValue - aValue;
+        })
+        .slice(0, maxRows);
+    
+    cropList.forEach(({ cropName, data1: item1, data2: item2 }) => {
+        const row = document.createElement('tr');
+        
+        const share1 = typeof item1.shareRate === 'number' ? item1.shareRate.toFixed(2) : '0.00';
+        const share2 = typeof item2.shareRate === 'number' ? item2.shareRate.toFixed(2) : '0.00';
+        
+        row.innerHTML = `
+            <td title="${cropName}">${cropName}</td>
+            <td class="value-cell">${share1}%</td>
+            <td class="rank-cell ${getRankClass(item1.rank)}">${item1.rank}</td>
+            <td class="value-cell">${share2}%</td>
+            <td class="rank-cell ${getRankClass(item2.rank)}">${item2.rank}</td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// 순위에 따른 CSS 클래스 반환
+function getRankClass(rank) {
+    if (rank === 1) return 'rank-1';
+    if (rank === 2) return 'rank-2';
+    if (rank === 3) return 'rank-3';
+    if (rank === 4) return 'rank-4';
+    if (rank === 5) return 'rank-5';
+    return '';
+}
+
+// 순위분석 섹션이 표시될 때 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        if (appState.data.raw && appState.data.raw.length > 0) {
+            initRankingSection();
+            initSpecializationSection();
+        } else {
+            setTimeout(() => {
+                initRankingSection();
+                initSpecializationSection();
+            }, 3000);
+        }
+    }, 1000);
+});
+
+// ========== 특화계수 기능 ==========
+
+// 특화계수 초기화
+function initSpecializationSection() {
+    console.log('⭐ 특화계수 섹션 초기화 시작');
+    setupSpecializationControls();
+    initSpecializationEventListeners();
+}
+
+// 특화계수 컨트롤 설정
+function setupSpecializationControls() {
+    const yearSelect = document.getElementById('specialization-year');
+    
+    if (yearSelect && appState.data.processed.years) {
+        const availableYears = [...appState.data.processed.years].sort((a, b) => b - a);
+        
+        // 년도 옵션 추가
+        yearSelect.innerHTML = '';
+        availableYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year + '년';
+            yearSelect.appendChild(option);
+        });
+        
+        // 기본값 설정 (최신 연도)
+        if (availableYears.length > 0) {
+            yearSelect.value = availableYears[0];
+        }
+        
+        console.log('📅 특화계수 연도 선택기 초기화 완료');
+    }
+}
+
+// 특화계수 이벤트 리스너
+function initSpecializationEventListeners() {
+    const yearSelect = document.getElementById('specialization-year');
+    const metricSelect = document.getElementById('specialization-metric');
+    const thresholdSelect = document.getElementById('coefficient-threshold');
+    
+    [yearSelect, metricSelect, thresholdSelect].forEach(select => {
+        if (select) {
+            select.addEventListener('change', updateSpecializationAnalysis);
+        }
+    });
+    
+    console.log('⭐ 특화계수 이벤트 리스너 초기화 완료');
+}
+
+// 특화계수 분석 업데이트
+function updateSpecializationAnalysis() {
+    const year = parseInt(document.getElementById('specialization-year')?.value);
+    const metric = document.getElementById('specialization-metric')?.value || 'area';
+    const threshold = parseFloat(document.getElementById('coefficient-threshold')?.value || '1');
+    
+    if (!year) {
+        console.warn('⚠️ 연도가 선택되지 않았습니다');
+        return;
+    }
+    
+    console.log(`⭐ 특화계수 분석 업데이트: ${year}년, ${metric}, 임계값: ${threshold}`);
+    
+    // 특화계수 데이터 계산
+    const specializationData = calculateSpecializationCoefficients(year, metric);
+    
+    if (specializationData && specializationData.length > 0) {
+        // 전국 기준 100ha 이상 필터링된 데이터 생성
+        const filteredData = filterSpecializationByNationalArea(specializationData, year);
+        
+        // KPI 업데이트 (필터링된 데이터 사용)
+        updateSpecializationKPIs(filteredData);
+        
+        // 테이블 업데이트 (필터링된 데이터 사용)
+        updateSpecializationTable(filteredData, threshold);
+        
+        // 차트 업데이트 (필터링된 데이터 사용)
+        // updateSpecializationChart(filteredData, metric);
+        
+        // 작목군별 분석 업데이트 (필터링된 데이터 사용)
+        updateCropGroupSpecialization(filteredData);
+        
+        console.log('✅ 특화계수 분석 업데이트 완료');
+        console.log(`📊 전체 작목: ${specializationData.length}개 → 필터링 후: ${filteredData.length}개`);
+    } else {
+        console.error('❌ 특화계수 데이터 계산 실패');
+    }
+}
+
+// 특화계수 계산
+function calculateSpecializationCoefficients(year, metric) {
+    console.log(`🧮 특화계수 계산 시작: ${year}년, ${metric}`);
+    
+    // 전국 데이터와 강원 데이터 가져오기
+    const nationalData = appState.data.raw.filter(row => 
+        row.year == year && row.region === '전국'
+    );
+    const gangwonData = appState.data.raw.filter(row => 
+        row.year == year && row.region === '강원'
+    );
+    
+    console.log(`📊 데이터 확인: 전국 ${nationalData.length}개, 강원 ${gangwonData.length}개`);
+    
+    if (nationalData.length === 0 || gangwonData.length === 0) {
+        console.error('❌ 필요한 데이터가 부족합니다');
+        return [];
+    }
+    
+    // 전국 및 강원 총합 계산
+    const nationalTotal = nationalData.reduce((sum, row) => {
+        const value = metric === 'area' ? (row.area || 0) : (row.production || 0);
+        return sum + value;
+    }, 0);
+    
+    const gangwonTotal = gangwonData.reduce((sum, row) => {
+        const value = metric === 'area' ? (row.area || 0) : (row.production || 0);
+        return sum + value;
+    }, 0);
+    
+    console.log(`📊 총합: 전국 ${nationalTotal.toLocaleString()}, 강원 ${gangwonTotal.toLocaleString()}`);
+    
+    const specializationData = [];
+    
+    // 강원 데이터를 기준으로 특화계수 계산
+    gangwonData.forEach(gangwonRow => {
+        const nationalRow = nationalData.find(row => row.cropName === gangwonRow.cropName);
+        
+        if (nationalRow) {
+            const gangwonValue = metric === 'area' ? (gangwonRow.area || 0) : (gangwonRow.production || 0);
+            const nationalValue = metric === 'area' ? (nationalRow.area || 0) : (nationalRow.production || 0);
+            
+            if (gangwonValue > 0 && nationalValue > 0 && gangwonTotal > 0 && nationalTotal > 0) {
+                // 비중 계산
+                const gangwonShare = (gangwonValue / gangwonTotal) * 100;
+                const nationalShare = (nationalValue / nationalTotal) * 100;
+                
+                // 특화계수 계산: (강원 비중) / (전국 비중)
+                const coefficient = nationalShare > 0 ? (gangwonShare / nationalShare) : 0;
+                
+                if (coefficient > 0) {
+                    specializationData.push({
+                        cropName: gangwonRow.cropName,
+                        cropGroup: gangwonRow.cropGroup || '기타',
+                        coefficient: coefficient,
+                        gangwonShare: gangwonShare,
+                        nationalShare: nationalShare,
+                        gangwonValue: gangwonValue,
+                        nationalValue: nationalValue,
+                        grade: getSpecializationGrade(coefficient)
+                    });
+                }
+            }
+        }
+    });
+    
+    // 특화계수 순으로 정렬
+    specializationData.sort((a, b) => b.coefficient - a.coefficient);
+    
+    console.log(`✅ 특화계수 계산 완료: ${specializationData.length}개 작목`);
+    console.log(`🔝 TOP 5:`, specializationData.slice(0, 5).map(item => 
+        `${item.cropName}(${item.coefficient.toFixed(2)})`
+    ));
+    
+    return specializationData;
+}
+
+// 전국 기준 재배면적 100ha 이상 필터링
+function filterSpecializationByNationalArea(specializationData, year) {
+    console.log('🔍 전국 기준 재배면적 100ha 이상 필터링 시작');
+    
+    // 해당 연도의 전국 데이터 가져오기
+    const nationalData = appState.data.raw.filter(row => 
+        row.year == year && row.region === '전국'
+    );
+    
+    const filteredData = specializationData.filter(item => {
+        const nationalCrop = nationalData.find(row => row.cropName === item.cropName);
+        const nationalArea = nationalCrop ? (nationalCrop.area || 0) : 0;
+        
+        const isFiltered = nationalArea >= 100;
+        
+        if (!isFiltered) {
+            console.log(`🚫 필터링 제외: ${item.cropName} (전국 재배면적: ${nationalArea}ha)`);
+        }
+        
+        return isFiltered;
+    });
+    
+    console.log(`✅ 필터링 완료: ${specializationData.length}개 → ${filteredData.length}개 작목`);
+    
+    return filteredData;
+}
+
+// 특화등급 결정
+function getSpecializationGrade(coefficient) {
+    if (coefficient >= 2.0) return { level: 'high', label: '고도특화' };
+    if (coefficient >= 1.5) return { level: 'medium', label: '고특화' };
+    if (coefficient >= 1.0) return { level: 'basic', label: '특화' };
+    return { level: 'none', label: '일반' };
+}
+
+// KPI 업데이트
+function updateSpecializationKPIs(data) {
+    const ultraSpecializedCrops = data.filter(item => item.coefficient >= 2.0);  // 고도특화 2.0↑
+    const highSpecializedCrops = data.filter(item => item.coefficient >= 1.5 && item.coefficient < 2.0);  // 고특화 1.5-1.9
+    const specializedCrops = data.filter(item => item.coefficient >= 1.0 && item.coefficient < 1.5);  // 특화 1.0-1.4
+    const normalCrops = data.filter(item => item.coefficient < 1.0);  // 일반 1.0 미만
+    
+    document.getElementById('ultra-specialized-count').textContent = ultraSpecializedCrops.length;
+    document.getElementById('high-specialized-count').textContent = highSpecializedCrops.length;
+    document.getElementById('specialized-count').textContent = specializedCrops.length;
+    document.getElementById('normal-count').textContent = normalCrops.length;
+}
+
+// 특화계수 테이블 업데이트
+function updateSpecializationTable(data, threshold) {
+    const tbody = document.getElementById('specialization-table-body');
+    tbody.innerHTML = '';
+    
+    const filteredData = data.filter(item => item.coefficient >= threshold);
+    
+    filteredData.forEach((item, index) => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td class="crop-name">${item.cropName}</td>
+            <td>${item.cropGroup}</td>
+            <td class="coefficient">${item.coefficient.toFixed(2)}</td>
+            <td>${item.gangwonShare.toFixed(2)}</td>
+            <td>${item.nationalShare.toFixed(2)}</td>
+            <td><span class="grade-${item.grade.level}">${item.grade.label}</span></td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+    
+    console.log(`📋 테이블 업데이트 완료: ${filteredData.length}개 작목 표시`);
+}
+
+// 특화계수 차트 업데이트
+function updateSpecializationChart(data, metric) {
+    const canvas = document.getElementById('specialization-chart');
+    const ctx = canvas.getContext('2d');
+    
+    // 기존 차트 제거
+    if (window.specializationChart) {
+        window.specializationChart.destroy();
+    }
+    
+    // 상위 20개 작목만 표시
+    const topCrops = data.slice(0, 20);
+    
+    const metricText = metric === 'area' ? '재배면적' : '생산량';
+    
+    window.specializationChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: '특화계수',
+                data: topCrops.map(item => ({
+                    x: item.nationalShare,
+                    y: item.coefficient,
+                    cropName: item.cropName,
+                    cropGroup: item.cropGroup
+                })),
+                backgroundColor: topCrops.map(item => {
+                    if (item.coefficient >= 2.0) return 'rgba(220, 38, 38, 0.7)';
+                    if (item.coefficient >= 1.5) return 'rgba(234, 88, 12, 0.7)';
+                    if (item.coefficient >= 1.0) return 'rgba(5, 150, 105, 0.7)';
+                    return 'rgba(107, 114, 128, 0.7)';
+                }),
+                borderColor: topCrops.map(item => {
+                    if (item.coefficient >= 2.0) return 'rgba(220, 38, 38, 1)';
+                    if (item.coefficient >= 1.5) return 'rgba(234, 88, 12, 1)';
+                    if (item.coefficient >= 1.0) return 'rgba(5, 150, 105, 1)';
+                    return 'rgba(107, 114, 128, 1)';
+                }),
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `${metricText} 기준 특화계수 분포 (상위 20개 작목)`
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const point = context.raw;
+                            return [
+                                `작목: ${point.cropName}`,
+                                `작목군: ${point.cropGroup}`,
+                                `전국 비중: ${context.parsed.x.toFixed(2)}%`,
+                                `특화계수: ${context.parsed.y.toFixed(2)}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: `전국 ${metricText} 비중 (%)`
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: '특화계수'
+                    },
+                    min: 0
+                }
+            }
+        }
+    });
+    
+    // 타이틀 업데이트
+    document.getElementById('specialization-chart-title').textContent = `${metricText} 특화계수 분포`;
+    document.getElementById('specialization-table-title').textContent = `${metricText} 특화작목 상세`;
+}
+
+// 작목군별 특화 현황 업데이트
+function updateCropGroupSpecialization(data) {
+    const specializedData = data.filter(item => item.coefficient >= 1.0);
+    
+    const groups = {
+        '식량': { key: 'grain', crops: [] },
+        '채소': { key: 'vegetable', crops: [] },
+        '과수': { key: 'fruit', crops: [] },
+        '특약용작물': { key: 'special', crops: [] }
+    };
+    
+    specializedData.forEach(item => {
+        const group = groups[item.cropGroup];
+        if (group) {
+            group.crops.push(item);
+        }
+    });
+    
+    Object.keys(groups).forEach(groupName => {
+        const group = groups[groupName];
+        const countElement = document.getElementById(`${group.key}-specialized-count`);
+        const contentElement = document.getElementById(`${group.key}-specialized-crops`);
+        
+        if (countElement && contentElement) {
+            countElement.textContent = `${group.crops.length}개`;
+            
+            contentElement.innerHTML = '';
+            
+            group.crops
+                .sort((a, b) => b.coefficient - a.coefficient)
+                .forEach(crop => {
+                    const tag = document.createElement('div');
+                    tag.className = 'specialized-crop-tag';
+                    
+                    // specialization-table과 동일한 클래스 체계 사용
+                    if (crop.coefficient >= 2.0) {
+                        tag.classList.add('grade-high');
+                    } else if (crop.coefficient >= 1.5) {
+                        tag.classList.add('grade-medium');
+                    } else if (crop.coefficient >= 1.0) {
+                        tag.classList.add('grade-basic');
+                    }
+                    
+                    tag.textContent = `${crop.cropName} (${crop.coefficient.toFixed(2)})`;
+                    tag.title = `특화계수: ${crop.coefficient.toFixed(2)}, 강원 비중: ${crop.gangwonShare.toFixed(2)}%`;
+                    
+                    contentElement.appendChild(tag);
+                });
+            
+            if (group.crops.length === 0) {
+                contentElement.innerHTML = '<div class="no-specialized-crops">특화작목 없음</div>';
+            }
+        }
+    });
+}
+
+// ========== 데이터 테이블 관련 함수 ==========
+
+// 데이터 테이블 필터 초기화
+function initializeDataTableFilters() {
+    console.log('데이터 테이블 필터 초기화');
+    
+    // 데이터가 로드되지 않았으면 초기화하지 않음
+    if (!appState.data.raw || appState.data.raw.length === 0) {
+        console.log('데이터가 아직 로드되지 않음, 필터 초기화를 건너뜀');
+        return;
+    }
+    
+    // 연도 필터 초기화
+    const yearFromSelect = document.getElementById('year-from');
+    const yearToSelect = document.getElementById('year-to');
+    
+    if (yearFromSelect && yearToSelect && appState.data.processed.years) {
+        // 사용 가능한 연도 목록 생성
+        const availableYears = [...appState.data.processed.years].sort((a, b) => a - b);
+        
+        yearFromSelect.innerHTML = '<option value="">시작년도</option>';
+        yearToSelect.innerHTML = '<option value="">종료년도</option>';
+        
+        availableYears.forEach(year => {
+            yearFromSelect.innerHTML += `<option value="${year}">${year}년</option>`;
+            yearToSelect.innerHTML += `<option value="${year}">${year}년</option>`;
+        });
+    }
+    
+    // 작목군 필터 초기화
+    const cropGroupFilter = document.getElementById('crop-group-filter');
+    if (cropGroupFilter && appState.data.processed.cropGroups) {
+        cropGroupFilter.innerHTML = '<option value="all">전체 선택</option>';
+        
+        appState.data.processed.cropGroups.forEach(group => {
+            cropGroupFilter.innerHTML += `<option value="${group}">${group}</option>`;
+        });
+    }
+}
+
+// 데이터 테이블 데이터 로드
+async function loadDataTableData() {
+    console.log('데이터 테이블 데이터 로드 시작');
+    
+    try {
+        // 데이터가 로드되지 않았으면 로딩하지 않음
+        if (!appState.data.raw || appState.data.raw.length === 0) {
+            console.log('데이터가 아직 로드되지 않음, 테이블 로딩을 건너뜀');
+            return;
+        }
+        
+        // appState.data.raw를 테이블 형태로 직접 사용
+        const flatData = appState.data.raw.map(row => ({
+            year: row.year,
+            cropGroup: row.cropGroup || row['작목군'] || row.crop_group || '',
+            cropName: row.cropName || row['작목명'] || row.crop_name || '',
+            region: row.region || row['지역'] || '',
+            area: parseFloat(row.area || row['재배면적'] || 0),
+            production: parseFloat(row.production || row['생산량'] || 0)
+        }));
+        
+        // 전역 변수로 저장
+        window.tableData = flatData;
+        
+        // 통계 업데이트
+        updateDataTableStats(flatData.length, flatData.length);
+        
+        // 테이블 렌더링
+        renderDataTableRows(flatData);
+        
+        console.log(`✅ 데이터 테이블 데이터 로드 완료: ${flatData.length}개 레코드`);
+        
+    } catch (error) {
+        console.error('❌ 데이터 테이블 데이터 로드 실패:', error);
+    }
+}
+
+// 데이터 테이블 행 렌더링
+function renderDataTableRows(data, page = 1) {
+    const tbody = document.getElementById('table-body');
+    const pageSize = parseInt(document.getElementById('page-size')?.value || '25');
+    
+    if (!tbody) {
+        console.error('테이블 본문 요소를 찾을 수 없음');
+        return;
+    }
+    
+    // 페이지네이션 계산
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pageData = data.slice(startIndex, endIndex);
+    
+    // 테이블 행 생성
+    tbody.innerHTML = '';
+    
+    pageData.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${row.year}</td>
+            <td>${row.cropGroup}</td>
+            <td>${row.cropName}</td>
+            <td>${row.region}</td>
+            <td class="numeric">${Number(row.area).toLocaleString()}</td>
+            <td class="numeric">${Number(row.production).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    // 페이지네이션 업데이트
+    updateDataTablePagination(data.length, page, pageSize);
+    
+    console.log(`테이블 렌더링 완료: ${pageData.length}개 행 표시`);
+}
+
+// 데이터 테이블 통계 업데이트
+function updateDataTableStats(totalRecords, filteredRecords) {
+    const totalElement = document.getElementById('total-records');
+    const filteredElement = document.getElementById('filtered-records');
+    
+    if (totalElement) totalElement.textContent = totalRecords.toLocaleString();
+    if (filteredElement) filteredElement.textContent = filteredRecords.toLocaleString();
+}
+
+// 데이터 테이블 페이지네이션 업데이트
+function updateDataTablePagination(totalRecords, currentPage, pageSize) {
+    const paginationElement = document.getElementById('pagination');
+    const showingElement = document.getElementById('showing-records');
+    
+    if (!paginationElement) return;
+    
+    const totalPages = Math.ceil(totalRecords / pageSize);
+    const startRecord = (currentPage - 1) * pageSize + 1;
+    const endRecord = Math.min(currentPage * pageSize, totalRecords);
+    
+    // 표시 중인 레코드 업데이트
+    if (showingElement) {
+        showingElement.textContent = `${startRecord}-${endRecord}`;
+    }
+    
+    // 페이지네이션 버튼 생성
+    paginationElement.innerHTML = '';
+    
+    if (totalPages > 1) {
+        // 이전 버튼
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '이전';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+            const filteredData = getFilteredTableData();
+            renderDataTableRows(filteredData, currentPage - 1);
+        };
+        paginationElement.appendChild(prevBtn);
+        
+        // 페이지 번호 버튼들
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.className = i === currentPage ? 'active' : '';
+                pageBtn.onclick = () => {
+                    const filteredData = getFilteredTableData();
+                    renderDataTableRows(filteredData, i);
+                };
+                paginationElement.appendChild(pageBtn);
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                paginationElement.appendChild(ellipsis);
+            }
+        }
+        
+        // 다음 버튼
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = '다음';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => {
+            const filteredData = getFilteredTableData();
+            renderDataTableRows(filteredData, currentPage + 1);
+        };
+        paginationElement.appendChild(nextBtn);
+    }
+}
+
+// 데이터 테이블 이벤트 리스너 설정
+function setupDataTableEventListeners() {
+    console.log('데이터 테이블 이벤트 리스너 설정');
+    
+    // 페이지 크기 변경
+    const pageSizeSelect = document.getElementById('page-size');
+    if (pageSizeSelect) {
+        pageSizeSelect.addEventListener('change', () => {
+            applyDataTableFilters();
+        });
+    }
+    
+    // 빠른 검색
+    const quickSearch = document.getElementById('quick-search');
+    if (quickSearch) {
+        quickSearch.addEventListener('input', () => {
+            applyDataTableFilters();
+        });
+    }
+    
+    // 고급 필터 토글
+    const advancedFilterBtn = document.getElementById('advanced-filter');
+    const filterPanel = document.getElementById('filterPanel');
+    if (advancedFilterBtn && filterPanel) {
+        advancedFilterBtn.addEventListener('click', () => {
+            const isHidden = filterPanel.style.display === 'none' || !filterPanel.style.display;
+            filterPanel.style.display = isHidden ? 'block' : 'none';
+        });
+    }
+    
+    // 필터 적용 및 초기화 버튼
+    const applyFiltersBtn = document.getElementById('apply-filters');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', () => {
+            applyDataTableFilters();
+            // 필터 패널 닫기
+            if (filterPanel) {
+                filterPanel.style.display = 'none';
+            }
+        });
+    }
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearDataTableFilters);
+    }
+    
+    // 엑셀 내보내기 버튼
+    const exportExcelBtn = document.getElementById('export-excel');
+    if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', exportToExcel);
+    }
+    
+    // 고급 필터는 실시간 적용하지 않고 버튼 클릭 시에만 적용하도록 변경
+    // (빠른 검색과 페이지 크기는 실시간 유지)
+}
+
+// 데이터 테이블 필터 적용
+function applyDataTableFilters() {
+    if (!window.tableData) return;
+    
+    console.log('데이터 테이블 필터 적용');
+    
+    let filteredData = [...window.tableData];
+    
+    // 빠른 검색
+    const quickSearchTerm = document.getElementById('quick-search')?.value?.toLowerCase() || '';
+    if (quickSearchTerm) {
+        filteredData = filteredData.filter(row => 
+            row.cropName.toLowerCase().includes(quickSearchTerm) ||
+            row.cropGroup.toLowerCase().includes(quickSearchTerm) ||
+            row.region.toLowerCase().includes(quickSearchTerm)
+        );
+    }
+    
+    // 연도 범위 필터
+    const yearFrom = document.getElementById('year-from')?.value;
+    const yearTo = document.getElementById('year-to')?.value;
+    
+    if (yearFrom) {
+        filteredData = filteredData.filter(row => parseInt(row.year) >= parseInt(yearFrom));
+    }
+    if (yearTo) {
+        filteredData = filteredData.filter(row => parseInt(row.year) <= parseInt(yearTo));
+    }
+    
+    // 지역 필터
+    const regionFilter = document.getElementById('region-filter')?.value;
+    if (regionFilter && regionFilter !== 'all') {
+        filteredData = filteredData.filter(row => row.region === regionFilter);
+    }
+    
+    // 작목군 필터
+    const cropGroupFilter = document.getElementById('crop-group-filter')?.value;
+    if (cropGroupFilter && cropGroupFilter !== 'all') {
+        filteredData = filteredData.filter(row => row.cropGroup === cropGroupFilter);
+    }
+    
+    // 작목명 검색
+    const cropSearchTerm = document.getElementById('crop-search')?.value?.toLowerCase() || '';
+    if (cropSearchTerm) {
+        filteredData = filteredData.filter(row => 
+            row.cropName.toLowerCase().includes(cropSearchTerm)
+        );
+    }
+    
+    console.log(`필터 적용 결과: ${window.tableData.length} → ${filteredData.length}개`);
+    
+    // 테이블 렌더링
+    renderDataTableRows(filteredData, 1);
+    
+    // 통계 업데이트
+    updateDataTableStats(window.tableData.length, filteredData.length);
+}
+
+// 현재 필터 조건에 맞는 데이터 가져오기
+function getFilteredTableData() {
+    if (!window.tableData) return [];
+    
+    let filteredData = [...window.tableData];
+    
+    // 빠른 검색
+    const quickSearchTerm = document.getElementById('quick-search')?.value?.toLowerCase() || '';
+    if (quickSearchTerm) {
+        filteredData = filteredData.filter(row => 
+            row.cropName.toLowerCase().includes(quickSearchTerm) ||
+            row.cropGroup.toLowerCase().includes(quickSearchTerm) ||
+            row.region.toLowerCase().includes(quickSearchTerm)
+        );
+    }
+    
+    // 연도 범위 필터
+    const yearFrom = document.getElementById('year-from')?.value;
+    const yearTo = document.getElementById('year-to')?.value;
+    
+    if (yearFrom) {
+        filteredData = filteredData.filter(row => parseInt(row.year) >= parseInt(yearFrom));
+    }
+    if (yearTo) {
+        filteredData = filteredData.filter(row => parseInt(row.year) <= parseInt(yearTo));
+    }
+    
+    // 지역 필터
+    const regionFilter = document.getElementById('region-filter')?.value;
+    if (regionFilter && regionFilter !== 'all') {
+        filteredData = filteredData.filter(row => row.region === regionFilter);
+    }
+    
+    // 작목군 필터
+    const cropGroupFilter = document.getElementById('crop-group-filter')?.value;
+    if (cropGroupFilter && cropGroupFilter !== 'all') {
+        filteredData = filteredData.filter(row => row.cropGroup === cropGroupFilter);
+    }
+    
+    // 작목명 검색
+    const cropSearchTerm = document.getElementById('crop-search')?.value?.toLowerCase() || '';
+    if (cropSearchTerm) {
+        filteredData = filteredData.filter(row => 
+            row.cropName.toLowerCase().includes(cropSearchTerm)
+        );
+    }
+    
+    return filteredData;
+}
+
+// 데이터 테이블 필터 초기화
+function clearDataTableFilters() {
+    console.log('데이터 테이블 필터 초기화');
+    
+    // 모든 필터 요소 초기화
+    const quickSearch = document.getElementById('quick-search');
+    const yearFromSelect = document.getElementById('year-from');
+    const yearToSelect = document.getElementById('year-to');
+    const regionFilter = document.getElementById('region-filter');
+    const cropGroupFilter = document.getElementById('crop-group-filter');
+    const cropSearch = document.getElementById('crop-search');
+    
+    if (quickSearch) quickSearch.value = '';
+    if (yearFromSelect) yearFromSelect.value = '';
+    if (yearToSelect) yearToSelect.value = '';
+    if (regionFilter) regionFilter.value = 'all';
+    if (cropGroupFilter) cropGroupFilter.value = 'all';
+    if (cropSearch) cropSearch.value = '';
+    
+    // 필터 적용하여 전체 데이터 표시
+    applyDataTableFilters();
+    
+    console.log('✅ 모든 필터가 초기화되었습니다');
+}
+
+// 엑셀 내보내기 함수
+function exportToExcel() {
+    console.log('엑셀 내보내기 시작');
+    
+    try {
+        // 현재 필터된 데이터 가져오기
+        const filteredData = getFilteredTableData();
+        
+        if (!filteredData || filteredData.length === 0) {
+            alert('내보낼 데이터가 없습니다.');
+            return;
+        }
+        
+        // 워크북 생성
+        const wb = XLSX.utils.book_new();
+        
+        // 헤더 정보 생성
+        const headerRows = [
+            ['데이터 출처: 본 자료는 「농림축산식품부」(시설채소온실현황 및 생산실적, 특용작물생산실적)와 「통계청」(농작물생산조사, 농업면적조사)의 통계표를 활용하여 재가공한 자료입니다.'],
+            ['이용 안내: 재가공 과정에서 다른 연구자료와 결과가 다를 수 있으므로 참고용으로 활용하시기 바랍니다.'],
+            ['원본 자료: 정확한 데이터가 필요한 경우 농림축산식품부 및 통계청의 원본 자료를 직접 확인하시기 바랍니다.'],
+            [''], // 빈 행
+            ['연도', '작목군', '작목명', '지역', '면적(ha)', '생산량(톤)'] // 테이블 헤더
+        ];
+        
+        // 데이터 행 생성
+        const dataRows = filteredData.map(row => [
+            row.year,
+            row.cropGroup,
+            row.cropName,
+            row.region,
+            Number(row.area),
+            Number(row.production)
+        ]);
+        
+        // 전체 데이터 배열 생성 (헤더 + 데이터)
+        const allData = [...headerRows, ...dataRows];
+        
+        // 워크시트 생성
+        const ws = XLSX.utils.aoa_to_sheet(allData);
+        
+        // 컬럼 너비 설정
+        ws['!cols'] = [
+            { width: 10 },  // 연도
+            { width: 15 },  // 작목군
+            { width: 20 },  // 작목명
+            { width: 12 },  // 지역
+            { width: 15 },  // 면적
+            { width: 15 }   // 생산량
+        ];
+        
+        // 첫 번째 행 스타일 설정 (데이터 출처)
+        if (ws['A1']) {
+            ws['A1'].s = {
+                font: { bold: true, color: { rgb: "0000FF" } },
+                alignment: { wrapText: true }
+            };
+        }
+        
+        // 두 번째 행 스타일 설정 (이용 안내)
+        if (ws['A2']) {
+            ws['A2'].s = {
+                font: { bold: true, color: { rgb: "FF6600" } },
+                alignment: { wrapText: true }
+            };
+        }
+        
+        // 세 번째 행 스타일 설정 (원본 자료 안내)
+        if (ws['A3']) {
+            ws['A3'].s = {
+                font: { bold: true, color: { rgb: "FF0000" } },
+                alignment: { wrapText: true }
+            };
+        }
+        
+        // 테이블 헤더 스타일 설정
+        const headerRow = 5; // 1-based index
+        ['A', 'B', 'C', 'D', 'E', 'F'].forEach(col => {
+            const cellRef = `${col}${headerRow}`;
+            if (ws[cellRef]) {
+                ws[cellRef].s = {
+                    font: { bold: true },
+                    fill: { fgColor: { rgb: "E6E6E6" } },
+                    alignment: { horizontal: "center" }
+                };
+            }
+        });
+        
+        // 워크시트를 워크북에 추가
+        XLSX.utils.book_append_sheet(wb, ws, '농업 재배동향 데이터');
+        
+        // 파일명 생성 (현재 날짜 포함)
+        const today = new Date().toISOString().split('T')[0];
+        const filename = `강원_농업재배동향_데이터_${today}.xlsx`;
+        
+        // 엑셀 파일 다운로드
+        XLSX.writeFile(wb, filename);
+        
+        console.log(`✅ 엑셀 내보내기 완료: ${filename}, ${filteredData.length}개 레코드`);
+        
+        // 사용자에게 알림
+        alert(`엑셀 파일이 성공적으로 다운로드되었습니다.\n파일명: ${filename}\n레코드 수: ${filteredData.length.toLocaleString()}개`);
+        
+    } catch (error) {
+        console.error('❌ 엑셀 내보내기 실패:', error);
+        alert('엑셀 파일 내보내기 중 오류가 발생했습니다.');
+    }
 }

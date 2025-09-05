@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>강원도 농업 재배동향 대시보드 Pro</title>
+    <title>강원 농업 재배동향 대시보드 Pro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -17,9 +17,8 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="logo">
-                <i class="fas fa-seedling"></i>
-                <span>Gangwon AgriTech</span>
+            <div class="logo" onclick="navigateToSection('home')" style="cursor: pointer;">
+                <img src="https://raw.githubusercontent.com/soonpark2/project2/main/logo.png" alt="강원특별자치도농업기술원">
             </div>
             <button class="sidebar-toggle" id="sidebarToggle">
                 <i class="fas fa-times"></i>
@@ -28,7 +27,11 @@
         
         <nav class="sidebar-nav">
             <ul>
-                <li><a href="#dashboard" class="nav-link active" data-section="dashboard">
+                <li><a href="#home" class="nav-link active" data-section="home">
+                    <i class="fas fa-home"></i>
+                    <span>홈</span>
+                </a></li>
+                <li><a href="#dashboard" class="nav-link" data-section="dashboard">
                     <i class="fas fa-chart-pie"></i>
                     <span>대시보드</span>
                 </a></li>
@@ -40,6 +43,14 @@
                     <i class="fas fa-seedling"></i>
                     <span>재배동향</span>
                 </a></li>
+                <li><a href="#ranking" class="nav-link" data-section="ranking">
+                    <i class="fas fa-medal"></i>
+                    <span>순위분석</span>
+                </a></li>
+                <li><a href="#specialization" class="nav-link" data-section="specialization">
+                    <i class="fas fa-star"></i>
+                    <span>특화계수</span>
+                </a></li>
                 <li><a href="#data" class="nav-link" data-section="data">
                     <i class="fas fa-database"></i>
                     <span>데이터 테이블</span>
@@ -47,17 +58,6 @@
             </ul>
         </nav>
         
-        <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="user-details">
-                    <span class="user-name">농림축산식품부, 통계청</span>
-                    <span class="user-role">시설채소온실현황 및 생산실적, 특용작물생산실적, 농작물생산조사, 농업면적조사 활용 재가공된 데이터입니다</span>
-                </div>
-            </div>
-        </div>
     </aside>
 
     <!-- Main Content Area -->
@@ -75,14 +75,131 @@
             <div class="header-right">
                 <div class="last-updated">
                     <i class="fas fa-clock"></i>
-                    <span id="lastUpdated">마지막 업데이트: --</span>
+                    <span id="lastUpdated">DB 업데이트일: 2025-09-05</span>
                 </div>
             </div>
         </header>
 
-        <!-- Dashboard Content -->
+        <!-- Content -->
         <div class="content-wrapper">
-            <section id="dashboard" class="section active">
+            <!-- Home Section -->
+            <section id="home" class="section active">
+
+                <!-- Quick Navigation -->
+                <div class="quick-nav-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-compass"></i>
+                        빠른 탐색
+                    </h2>
+                    <div class="quick-nav-grid">
+                        <div class="quick-nav-card" data-section="dashboard">
+                            <div class="quick-nav-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <h3>대시보드</h3>
+                            <p>전반적인 농업 현황을 한눈에 확인하세요</p>
+                            <div class="quick-nav-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-nav-card" data-section="analytics">
+                            <div class="quick-nav-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3>작목군별 TOP 5 동향</h3>
+                            <p>주요 작목의 변화 추이를 분석합니다</p>
+                            <div class="quick-nav-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-nav-card" data-section="cultivation">
+                            <div class="quick-nav-icon">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <h3>재배동향</h3>
+                            <p>작목별 재배 현황과 동향을 살펴보세요</p>
+                            <div class="quick-nav-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-nav-card" data-section="ranking">
+                            <div class="quick-nav-icon">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                            <h3>순위분석</h3>
+                            <p>작목별 순위를 확인하세요</p>
+                            <div class="quick-nav-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-nav-card" data-section="specialization">
+                            <div class="quick-nav-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <h3>특화계수</h3>
+                            <p>강원 특화 작목을 분석합니다</p>
+                            <div class="quick-nav-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-nav-card" data-section="data">
+                            <div class="quick-nav-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3>데이터 테이블</h3>
+                            <p>상세 데이터를 조회하고 내보내기 하세요</p>
+                            <div class="quick-nav-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Data Info Section -->
+                <div class="data-info-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        데이터 정보
+                    </h2>
+                    <div class="data-info-content">
+                        <div class="data-source-card">
+                            <div class="source-header">
+                                <i class="fas fa-database"></i>
+                                <h3>데이터 출처</h3>
+                            </div>
+                            <ul class="source-list">
+                                <li><strong>농림축산식품부</strong> - 시설채소온실현황 및 생산실적</li>
+                                <li><strong>농림축산식품부</strong> - 특용작물생산실적</li>
+                                <li><strong>통계청</strong> - 농작물생산조사</li>
+                                <li><strong>통계청</strong> - 농업면적조사</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="update-info-card">
+                            <div class="update-header">
+                                <i class="fas fa-calendar-alt"></i>
+                                <h3>업데이트 정보</h3>
+                            </div>
+                            <div class="update-content">
+                                <p class="update-note">데이터 재가공 과정에서 다른 연구자료와 결과가 다를 수 있으므로 참고용으로 활용하시기 바랍니다.</p>
+                                <p class="update-note">통계표별 확정 시점이 달라 현재 2024년 자료가 미반영 상태입니다. 추후 모든 통계가 확정되면 본 자료도 업데이트될 예정입니다.</p>
+                                <div class="last-update">
+                                    <span>DB 업데이트일: <strong id="last-update-date">2025-09-05</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section">
                 <!-- Dashboard Grid 3x4 Layout -->
                 <div class="dashboard-grid">
                     <!-- Row 1: Filter Cards -->
@@ -656,7 +773,7 @@
                         <div class="metric-selector">
                             <label>측정 항목</label>
                             <select class="metric-select" id="cultivation-trend-metric">
-                                <option value="area">재배면적 (ha)</option>
+                                <option value="area" selected>재배면적 (ha)</option>
                                 <option value="production">생산량 (톤)</option>
                             </select>
                         </div>
@@ -665,16 +782,16 @@
 
                 <!-- Dashboard Cards Wrapper -->
                 <div class="crop-group-card-wrapper">
-                    <!-- 전국 농산물 재배면적 동향 카드 -->
+                    <!-- 전국 농산물 생산량 동향 카드 -->
                     <div class="dashboard-card">
                         <div class="dashboard-card-header">
-                            <h3 id="cultivation-card-title">전국 농산물 재배면적 동향</h3>
+                            <h3 id="cultivation-card-title">전국 농산물 생산량 동향</h3>
                         </div>
                         
                         <!-- Card Filter Slider -->
                         <div class="card-filter-section">
                             <div class="area-filter-section">
-                                <label>최소 재배면적 필터</label>
+                                <label>최소 생산량 필터</label>
                                 <div class="slider-container horizontal">
                                     <div class="slider-controls">
                                         <div class="slider-wrapper">
@@ -716,7 +833,7 @@
                                         </thead>
                                         <tbody>
                                             <tr class="increase-row">
-                                                <td class="category-cell"><strong id="cultivation-increase-label">면적증가</strong></td>
+                                                <td class="category-cell"><strong id="cultivation-increase-label">생산량증가</strong></td>
                                                 <td class="number cultivation-total-increase">-</td>
                                                 <td class="crop-list cultivation-grain-increase">-</td>
                                                 <td class="crop-list cultivation-vegetable-increase">-</td>
@@ -724,7 +841,7 @@
                                                 <td class="crop-list cultivation-special-increase">-</td>
                                             </tr>
                                             <tr class="maintain-row">
-                                                <td class="category-cell"><strong id="cultivation-maintain-label">면적유지</strong></td>
+                                                <td class="category-cell"><strong id="cultivation-maintain-label">생산량유지</strong></td>
                                                 <td class="number cultivation-total-maintain">-</td>
                                                 <td class="crop-list cultivation-grain-maintain">-</td>
                                                 <td class="crop-list cultivation-vegetable-maintain">-</td>
@@ -732,7 +849,7 @@
                                                 <td class="crop-list cultivation-special-maintain">-</td>
                                             </tr>
                                             <tr class="decrease-row">
-                                                <td class="category-cell"><strong id="cultivation-decrease-label">면적감소</strong></td>
+                                                <td class="category-cell"><strong id="cultivation-decrease-label">생산량감소</strong></td>
                                                 <td class="number cultivation-total-decrease">-</td>
                                                 <td class="crop-list cultivation-grain-decrease">-</td>
                                                 <td class="crop-list cultivation-vegetable-decrease">-</td>
@@ -749,27 +866,33 @@
                     <!-- 전국 농산물 구성비 동향 카드 -->
                     <div class="dashboard-card">
                         <div class="dashboard-card-header">
-                            <h3>전국 농산물 구성비 동향</h3>
+                            <h3 id="cultivation-card2-title">전국 농산물 재배면적 동향</h3>
                         </div>
                         
                         <!-- Card Filter Slider -->
                         <div class="card-filter-section">
                             <div class="area-filter-section">
-                                <label>최소 구성비 필터</label>
-                                <div class="slider-container">
-                                    <input type="range" id="card2-area-filter-slider" 
-                                           class="area-slider"
-                                           min="0" max="50" step="1" value="0">
-                                    <div class="slider-info">
-                                        <span class="slider-value">
-                                            <span id="card2-area-value">0</span>% 이상
-                                        </span>
-                                    </div>
-                                    <div class="slider-presets">
-                                        <button type="button" class="preset-btn" data-value="0" data-card="card2">전체</button>
-                                        <button type="button" class="preset-btn" data-value="1" data-card="card2">1%+</button>
-                                        <button type="button" class="preset-btn" data-value="5" data-card="card2">5%+</button>
-                                        <button type="button" class="preset-btn" data-value="10" data-card="card2">10%+</button>
+                                <label>최소 재배면적 필터</label>
+                                <div class="slider-container horizontal">
+                                    <div class="slider-controls">
+                                        <div class="slider-wrapper">
+                                            <input type="range" id="card2-area-filter-slider" 
+                                                   class="area-slider"
+                                                   min="0" max="1000" step="10" value="0">
+                                            <div class="slider-info">
+                                                <span class="slider-value">
+                                                    <span id="card2-area-value">0</span>ha 이상
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="presets-wrapper">
+                                            <div class="slider-presets">
+                                                <button type="button" class="preset-btn" data-value="0" data-card="card2">전체</button>
+                                                <button type="button" class="preset-btn" data-value="10" data-card="card2">10ha+</button>
+                                                <button type="button" class="preset-btn" data-value="50" data-card="card2">50ha+</button>
+                                                <button type="button" class="preset-btn" data-value="100" data-card="card2">100ha+</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -821,31 +944,37 @@
                         </div>
                     </div>
 
-                    <!-- 강원 농산물 재배면적 동향 카드 -->
+                    <!-- 강원 농산물 생산량 동향 카드 -->
                     <div class="dashboard-card">
                         <div class="dashboard-card-header">
-                            <h3 id="cultivation-gangwon-area-card-title">강원 농산물 재배면적 동향</h3>
+                            <h3 id="cultivation-gangwon-area-card-title">강원 농산물 생산량 동향</h3>
                         </div>
                         
                         <!-- Card Filter Slider -->
                         <div class="card-filter-section">
                             <div class="area-filter-section">
                                 <label>최소 재배면적 필터</label>
-                                <div class="slider-container">
-                                    <input type="range" id="card3-area-filter-slider" 
-                                           class="area-slider"
-                                           min="0" max="1000" step="10" value="0">
-                                    <div class="slider-info">
-                                        <span class="slider-value">
-                                            <span id="card3-area-value">0</span>ha 이상
-                                        </span>
-                                        <span class="filtered-count" id="card3-filtered-count">(전체 작목)</span>
-                                    </div>
-                                    <div class="slider-presets">
-                                        <button type="button" class="preset-btn" data-value="0" data-card="card3">전체</button>
-                                        <button type="button" class="preset-btn" data-value="10" data-card="card3">10ha+</button>
-                                        <button type="button" class="preset-btn" data-value="50" data-card="card3">50ha+</button>
-                                        <button type="button" class="preset-btn" data-value="100" data-card="card3">100ha+</button>
+                                <div class="slider-container horizontal">
+                                    <div class="slider-controls">
+                                        <div class="slider-wrapper">
+                                            <input type="range" id="card3-area-filter-slider" 
+                                                   class="area-slider"
+                                                   min="0" max="1000" step="10" value="0">
+                                            <div class="slider-info">
+                                                <span class="slider-value">
+                                                    <span id="card3-area-value">0</span>ha 이상
+                                                </span>
+                                                <span class="filtered-count" id="card3-filtered-count">(전체 작목)</span>
+                                            </div>
+                                        </div>
+                                        <div class="presets-wrapper">
+                                            <div class="slider-presets">
+                                                <button type="button" class="preset-btn" data-value="0" data-card="card3">전체</button>
+                                                <button type="button" class="preset-btn" data-value="10" data-card="card3">10ha+</button>
+                                                <button type="button" class="preset-btn" data-value="50" data-card="card3">50ha+</button>
+                                                <button type="button" class="preset-btn" data-value="100" data-card="card3">100ha+</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -867,7 +996,7 @@
                                         </thead>
                                         <tbody>
                                             <tr class="increase-row">
-                                                <td class="category-cell"><strong id="cultivation-gangwon-increase-label">면적증가</strong></td>
+                                                <td class="category-cell"><strong id="cultivation-gangwon-increase-label">생산량증가</strong></td>
                                                 <td class="number cultivation-gangwon-total-increase">-</td>
                                                 <td class="crop-list cultivation-gangwon-grain-increase">-</td>
                                                 <td class="crop-list cultivation-gangwon-vegetable-increase">-</td>
@@ -875,7 +1004,7 @@
                                                 <td class="crop-list cultivation-gangwon-special-increase">-</td>
                                             </tr>
                                             <tr class="maintain-row">
-                                                <td class="category-cell"><strong id="cultivation-gangwon-maintain-label">면적유지</strong></td>
+                                                <td class="category-cell"><strong id="cultivation-gangwon-maintain-label">생산량유지</strong></td>
                                                 <td class="number cultivation-gangwon-total-maintain">-</td>
                                                 <td class="crop-list cultivation-gangwon-grain-maintain">-</td>
                                                 <td class="crop-list cultivation-gangwon-vegetable-maintain">-</td>
@@ -883,7 +1012,7 @@
                                                 <td class="crop-list cultivation-gangwon-special-maintain">-</td>
                                             </tr>
                                             <tr class="decrease-row">
-                                                <td class="category-cell"><strong id="cultivation-gangwon-decrease-label">면적감소</strong></td>
+                                                <td class="category-cell"><strong id="cultivation-gangwon-decrease-label">생산량감소</strong></td>
                                                 <td class="number cultivation-gangwon-total-decrease">-</td>
                                                 <td class="crop-list cultivation-gangwon-grain-decrease">-</td>
                                                 <td class="crop-list cultivation-gangwon-vegetable-decrease">-</td>
@@ -900,28 +1029,34 @@
                     <!-- 강원 농산물 구성비 동향 카드 -->
                     <div class="dashboard-card">
                         <div class="dashboard-card-header">
-                            <h3>강원 농산물 구성비 동향</h3>
+                            <h3 id="cultivation-card4-title">강원 농산물 생산량 동향</h3>
                         </div>
                         
                         <!-- Card Filter Slider -->
                         <div class="card-filter-section">
                             <div class="area-filter-section">
-                                <label>최소 구성비 필터</label>
-                                <div class="slider-container">
-                                    <input type="range" id="card4-area-filter-slider" 
-                                           class="area-slider"
-                                           min="0" max="50" step="1" value="0">
-                                    <div class="slider-info">
-                                        <span class="slider-value">
-                                            <span id="card4-area-value">0</span>% 이상
-                                        </span>
-                                        <span class="filtered-count" id="card4-filtered-count">(전체 작목)</span>
-                                    </div>
-                                    <div class="slider-presets">
-                                        <button type="button" class="preset-btn" data-value="0" data-card="card4">전체</button>
-                                        <button type="button" class="preset-btn" data-value="1" data-card="card4">1%+</button>
-                                        <button type="button" class="preset-btn" data-value="5" data-card="card4">5%+</button>
-                                        <button type="button" class="preset-btn" data-value="10" data-card="card4">10%+</button>
+                                <label>최소 재배면적 필터</label>
+                                <div class="slider-container horizontal">
+                                    <div class="slider-controls">
+                                        <div class="slider-wrapper">
+                                            <input type="range" id="card4-area-filter-slider" 
+                                                   class="area-slider"
+                                                   min="0" max="1000" step="10" value="0">
+                                            <div class="slider-info">
+                                                <span class="slider-value">
+                                                    <span id="card4-area-value">0</span>ha 이상
+                                                </span>
+                                                <span class="filtered-count" id="card4-filtered-count">(전체 작목)</span>
+                                            </div>
+                                        </div>
+                                        <div class="presets-wrapper">
+                                            <div class="slider-presets">
+                                                <button type="button" class="preset-btn" data-value="0" data-card="card4">전체</button>
+                                                <button type="button" class="preset-btn" data-value="10" data-card="card4">10ha+</button>
+                                                <button type="button" class="preset-btn" data-value="50" data-card="card4">50ha+</button>
+                                                <button type="button" class="preset-btn" data-value="100" data-card="card4">100ha+</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -980,7 +1115,6 @@
                 <div class="section-header">
                     <h2><i class="fas fa-database"></i> 데이터 테이블</h2>
                     <div class="data-actions">
-                        <button class="btn-secondary" id="export-csv"><i class="fas fa-file-csv"></i> CSV 내보내기</button>
                         <button class="btn-secondary" id="export-excel"><i class="fas fa-file-excel"></i> Excel 내보내기</button>
                         <button class="btn-primary" id="advanced-filter"><i class="fas fa-filter"></i> 고급 필터</button>
                     </div>
@@ -1011,7 +1145,7 @@
                             <label>지역</label>
                             <select id="region-filter">
                                 <option value="all">전체 지역</option>
-                                <option value="강원도">강원도만</option>
+                                <option value="강원">강원만</option>
                                 <option value="전국">전국만</option>
                             </select>
                         </div>
@@ -1054,7 +1188,6 @@
                                 <option value="25">25개씩 보기</option>
                                 <option value="50">50개씩 보기</option>
                                 <option value="100">100개씩 보기</option>
-                                <option value="all">모두 보기</option>
                             </select>
                         </div>
                     </div>
@@ -1081,14 +1214,11 @@
                                     <th class="sortable numeric" data-sort="production">
                                         생산량(톤) <i class="fas fa-sort"></i>
                                     </th>
-                                    <th class="sortable numeric" data-sort="productivity">
-                                        생산성(톤/ha) <i class="fas fa-sort"></i>
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="table-body">
                                 <tr class="loading-row">
-                                    <td colspan="7">
+                                    <td colspan="6">
                                         <div class="table-loading">
                                             <i class="fas fa-spinner fa-spin"></i>
                                             데이터를 불러오는 중...
@@ -1107,8 +1237,394 @@
                 </div>
             </section>
 
+            <!-- Ranking Analysis Section -->
+            <section id="ranking" class="section">
+                <!-- Compact Header with Title and Controls -->
+                <div class="compact-header">
+                    <!-- Title Section -->
+                    <div class="title-section">
+                        <div class="comparison-title">
+                            <h2><i class="fas fa-medal"></i> 순위분석</h2>
+                        </div>
+                    </div>
+                    
+                    <!-- Controls Section -->
+                    <div class="controls-section">
+                        <div class="year-selectors">
+                            <div class="year-selector">
+                                <label>선택연도 1</label>
+                                <select class="year-select" id="ranking-year-1">
+                                    <!-- DB 연도가 JavaScript로 동적 생성됨 -->
+                                </select>
+                            </div>
+                            <div class="year-selector">
+                                <label>선택연도 2</label>
+                                <select class="year-select" id="ranking-year-2">
+                                    <!-- DB 연도가 JavaScript로 동적 생성됨 -->
+                                </select>
+                            </div>
+                            <div class="metric-selector">
+                                <label>측정항목</label>
+                                <select class="metric-select" id="ranking-metric">
+                                    <option value="area" selected>재배면적 (ha)</option>
+                                    <option value="production">생산량 (톤)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn-download"><i class="fas fa-download"></i> 순위표 다운로드</button>
+                    </div>
+                </div>
+
+                <!-- Filter Notice -->
+                <div class="ranking-filter-notice">
+                    <div class="notice-content">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="ranking-filter-text">선택연도 2값 전국 기준 재배면적 100ha 이상</span>
+                    </div>
+                </div>
+
+                <!-- Ranking Tables Wrapper -->
+                <div class="ranking-tables-wrapper">
+                    <!-- 전국 재배면적/생산량 테이블 -->
+                    <div class="ranking-table-card">
+                        <div class="ranking-table-header">
+                            <h3 id="national-ranking-title">전국 재배면적</h3>
+                        </div>
+                        <div class="ranking-table-container">
+                            <table class="ranking-table" id="national-ranking-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">구분</th>
+                                        <th colspan="2" id="national-year1-header">선택연도 1</th>
+                                        <th colspan="2" id="national-year2-header">선택연도 2</th>
+                                    </tr>
+                                    <tr>
+                                        <th id="national-value1-header">값</th>
+                                        <th>순위</th>
+                                        <th id="national-value2-header">값</th>
+                                        <th>순위</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="national-ranking-tbody">
+                                    <!-- 데이터가 JavaScript로 동적 생성됨 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 강원 재배면적/생산량 테이블 -->
+                    <div class="ranking-table-card">
+                        <div class="ranking-table-header">
+                            <h3 id="gangwon-ranking-title">강원 재배면적</h3>
+                        </div>
+                        <div class="ranking-table-container">
+                            <table class="ranking-table" id="gangwon-ranking-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">구분</th>
+                                        <th colspan="2" id="gangwon-year1-header">선택연도 1</th>
+                                        <th colspan="2" id="gangwon-year2-header">선택연도 2</th>
+                                    </tr>
+                                    <tr>
+                                        <th id="gangwon-value1-header">값</th>
+                                        <th>순위</th>
+                                        <th id="gangwon-value2-header">값</th>
+                                        <th>순위</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gangwon-ranking-tbody">
+                                    <!-- 데이터가 JavaScript로 동적 생성됨 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 전국대비 점유율 테이블 -->
+                    <div class="ranking-table-card">
+                        <div class="ranking-table-header">
+                            <h3 id="share-ranking-title">전국대비 점유율</h3>
+                        </div>
+                        <div class="ranking-table-container">
+                            <table class="ranking-table" id="share-ranking-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">구분</th>
+                                        <th colspan="2" id="share-year1-header">선택연도 1</th>
+                                        <th colspan="2" id="share-year2-header">선택연도 2</th>
+                                    </tr>
+                                    <tr>
+                                        <th>점유율 (%)</th>
+                                        <th>순위</th>
+                                        <th>점유율 (%)</th>
+                                        <th>순위</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="share-ranking-tbody">
+                                    <!-- 데이터가 JavaScript로 동적 생성됨 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Specialization Coefficient Section -->
+            <section id="specialization" class="section">
+                <!-- Compact Header with Title and Controls -->
+                <div class="compact-header">
+                    <!-- Title Section -->
+                    <div class="title-section">
+                        <div class="comparison-title">
+                            <h2><i class="fas fa-star"></i> 특화계수 분석</h2>
+                        </div>
+                    </div>
+                    
+                    <!-- Controls Section -->
+                    <div class="controls-section">
+                        <div class="year-selectors">
+                            <div class="year-selector">
+                                <label>분석연도</label>
+                                <select class="year-select" id="specialization-year">
+                                    <!-- DB 연도가 JavaScript로 동적 생성됨 -->
+                                </select>
+                            </div>
+                            <div class="metric-selector">
+                                <label>측정항목</label>
+                                <select class="metric-select" id="specialization-metric">
+                                    <option value="area" selected>재배면적 (ha)</option>
+                                    <option value="production">생산량 (톤)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn-download"><i class="fas fa-download"></i> 특화계수 데이터 다운로드</button>
+                    </div>
+                </div>
+
+                <!-- Specialization Notice -->
+                <div class="specialization-notice">
+                    <div class="notice-header">
+                        <div>
+                            <i class="fas fa-info-circle"></i>
+                            <span class="notice-title">특화계수 분석 개요</span>
+                        </div>
+                        <div class="filter-notice">※ 분석연도 전국 기준 재배면적 100ha 이상 작목 대상</div>
+                    </div>
+                    <div class="notice-body">
+                        <div class="formula-section">
+                            <div class="formula-box">
+                                <div class="formula-main">
+                                    특화계수 = <span class="formula-fraction">
+                                        <span class="formula-numerator">강원 특정작목 비중(%)</span>
+                                        <span class="formula-denominator">전국 특정작목 비중(%)</span>
+                                    </span>
+                                </div>
+                                <div class="formula-detail">
+                                    <div class="formula-item">
+                                        <strong>강원 작목 비중</strong> = <span class="formula-calculation">(강원 특정작목 재배면적 or 생산량) ÷ (강원 전체 재배면적 or 생산량) × 100</span>
+                                    </div>
+                                    <div class="formula-item">
+                                        <strong>전국 작목 비중</strong> = <span class="formula-calculation">(전국 특정작목 재배면적 or 생산량) ÷ (전국 전체 재배면적 or 생산량) × 100</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="data-source-notice">
+                                <div class="notice-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div class="notice-text">
+                                    본 자료는 「농림축산식품부」(시설채소온실현황 및 생산실적, 특용작물생산실적)와 「통계청」(농작물생산조사, 농업면적조사)의 통계표를 활용하여 재가공한 특화계수입니다.<br>
+                                    재가공 과정에서 다른 연구자료와 결과가 다를 수 있으므로 참고용으로 활용하시기 바랍니다.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="interpretation-section">
+                            <div class="interpretation-title">분류 기준</div>
+                            <div class="interpretation-grid">
+                                <div class="interpretation-item high">
+                                    <div class="interpretation-value">2.0 이상</div>
+                                    <div class="interpretation-label">고도특화</div>
+                                    <div class="interpretation-desc">전국 대비 2배 이상 집중도가 높은 작목</div>
+                                </div>
+                                <div class="interpretation-item medium">
+                                    <div class="interpretation-value">1.5~1.9</div>
+                                    <div class="interpretation-label">고특화</div>
+                                    <div class="interpretation-desc">전국 대비 상당히 높은 집중도를 보이는 작목</div>
+                                </div>
+                                <div class="interpretation-item basic">
+                                    <div class="interpretation-value">1.0~1.4</div>
+                                    <div class="interpretation-label">특화</div>
+                                    <div class="interpretation-desc">전국 대비 평균 이상의 집중도를 보이는 작목</div>
+                                </div>
+                                <div class="interpretation-item normal">
+                                    <div class="interpretation-value">1.0 미만</div>
+                                    <div class="interpretation-label">일반</div>
+                                    <div class="interpretation-desc">전국 평균 수준이거나 그 이하의 집중도</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specialization Content -->
+                <div class="specialization-content">
+                    <!-- KPI Cards -->
+                    <div class="specialization-kpi-wrapper">
+                        <div class="kpi-card ultra-specialized">
+                            <div class="kpi-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <div class="kpi-value" id="ultra-specialized-count">0</div>
+                                <div class="kpi-label">고도특화 작목수</div>
+                                <div class="kpi-unit">개 (계수 2.0↑)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="kpi-card high-specialized">
+                            <div class="kpi-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <div class="kpi-value" id="high-specialized-count">0</div>
+                                <div class="kpi-label">고특화 작목수</div>
+                                <div class="kpi-unit">개 (계수 1.5-1.9)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="kpi-card specialized">
+                            <div class="kpi-icon">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <div class="kpi-value" id="specialized-count">0</div>
+                                <div class="kpi-label">특화 작목수</div>
+                                <div class="kpi-unit">개 (계수 1.0-1.4)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="kpi-card normal">
+                            <div class="kpi-icon">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <div class="kpi-value" id="normal-count">0</div>
+                                <div class="kpi-label">일반 작목수</div>
+                                <div class="kpi-unit">개 (계수 1.0 미만)</div>
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                    <!-- 작목군별 특화 현황 -->
+                    <div class="crop-group-specialization">
+                        <div class="section-title">
+                            <h3><i class="fas fa-layer-group"></i> 작목군별 특화 현황</h3>
+                        </div>
+                        <div class="crop-group-grid">
+                            <div class="crop-group-card" id="grain-specialization">
+                                <div class="crop-group-header">
+                                    <h4>식량 작목</h4>
+                                    <span class="crop-group-count" id="grain-specialized-count">0개</span>
+                                </div>
+                                <div class="crop-group-content" id="grain-specialized-crops">
+                                    <!-- 동적 생성 -->
+                                </div>
+                            </div>
+                            
+                            <div class="crop-group-card" id="vegetable-specialization">
+                                <div class="crop-group-header">
+                                    <h4>채소 작목</h4>
+                                    <span class="crop-group-count" id="vegetable-specialized-count">0개</span>
+                                </div>
+                                <div class="crop-group-content" id="vegetable-specialized-crops">
+                                    <!-- 동적 생성 -->
+                                </div>
+                            </div>
+                            
+                            <div class="crop-group-card" id="fruit-specialization">
+                                <div class="crop-group-header">
+                                    <h4>과수 작목</h4>
+                                    <span class="crop-group-count" id="fruit-specialized-count">0개</span>
+                                </div>
+                                <div class="crop-group-content" id="fruit-specialized-crops">
+                                    <!-- 동적 생성 -->
+                                </div>
+                            </div>
+                            
+                            <div class="crop-group-card" id="special-specialization">
+                                <div class="crop-group-header">
+                                    <h4>특약용작물</h4>
+                                    <span class="crop-group-count" id="special-specialized-count">0개</span>
+                                </div>
+                                <div class="crop-group-content" id="special-specialized-crops">
+                                    <!-- 동적 생성 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Grid -->
+                    <div class="specialization-main-grid">
+
+                        <!-- Specialization Table -->
+                        <div class="specialization-table-card">
+                            <div class="table-header">
+                                <h3><i class="fas fa-list"></i> <span id="specialization-table-title">특화작목 상세</span></h3>
+                                <div class="table-controls">
+                                    <div class="coefficient-filter">
+                                        <label>최소 특화계수</label>
+                                        <select id="coefficient-threshold">
+                                            <option value="0">전체 (0.0 이상)</option>
+                                            <option value="1" selected>특화작목 (1.0 이상)</option>
+                                            <option value="1.5">고특화 (1.5 이상)</option>
+                                            <option value="2">고도특화 (2.0 이상)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="specialization-table" id="specialization-table">
+                                    <thead>
+                                        <tr>
+                                            <th>순위</th>
+                                            <th>작목명</th>
+                                            <th>작목군</th>
+                                            <th>특화계수</th>
+                                            <th>강원 비중(%)</th>
+                                            <th>전국 비중(%)</th>
+                                            <th>특화등급</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="specialization-table-body">
+                                        <!-- 데이터가 JavaScript로 동적 생성됨 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
         </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>데이터 출처</h4>
+                <p>본 자료는 「농림축산식품부」(시설채소온실현황 및 생산실적, 특용작물생산실적)와 「통계청」(농작물생산조사, 농업면적조사)의 통계표를 활용하여 재가공한 자료입니다.</p>
+            </div>
+            <div class="footer-section">
+                <h4>이용 안내</h4>
+                <p>재가공 과정에서 다른 연구자료와 결과가 다를 수 있으므로 참고용으로 활용하시기 바랍니다.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 강원 농업 재배동향 대시보드. 농림축산식품부, 통계청 자료 활용.</p>
+        </div>
+    </footer>
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
@@ -1129,6 +1645,8 @@
         </button>
     </div>
 
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
