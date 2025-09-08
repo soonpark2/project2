@@ -2879,7 +2879,8 @@ select:focus-visible {
     outline-offset: 2px;
 }
 
-/* /* Dark mode support */
+/* Dark mode support */
+/*
 @media (prefers-color-scheme: dark) {
     :root {
         --white: #1a1a1a;
@@ -2894,7 +2895,8 @@ select:focus-visible {
         --gray-800: #aaaaaa;
         --gray-900: #ffffff;
     }
-} */
+}
+*/
 
 /* Print styles */
 @media print {
