@@ -71,7 +71,7 @@ class AppState {
         this.data.processed = {
             years: [...new Set(data.map(row => row.year).filter(y => y))].sort(),
             cropGroups: [...new Set(data.map(row => row.cropGroup).filter(g => g))],
-            crops: [...new Set(data.map(row => row.cropName).filter(c => c))],
+            crops: [...new Set(data.map(row => `${row.cropGroup}|${row.cropName}`).filter(c => c && !c.includes('undefined')))],
             regions: [...new Set(data.map(row => row.region).filter(r => r))],
             fieldMapping
         };
@@ -2302,6 +2302,11 @@ function updateCropGroupCardHeaders() {
     const selectedMetric = document.getElementById('trend-metric')?.value || 'area';
     const metricText = selectedMetric === 'area' ? '재배면적' : '생산량';
     
+    // 년도 정보 가져오기
+    const yearA = parseInt(document.getElementById('year-a')?.value);
+    const yearB = parseInt(document.getElementById('year-b')?.value);
+    const yearText = (yearA && yearB) ? ` (${yearA}년 대비 ${yearB}년)` : '';
+    
     // 각 카드 헤더 업데이트 (순서: 작물 전체, 식량, 채소, 과수, 특약용작물)
     // 이제 모든 카드가 crop-group-card-wrapper 구조를 사용하므로 일관된 선택자 사용 가능
     const cardHeaders = [
@@ -2316,14 +2321,18 @@ function updateCropGroupCardHeaders() {
         const element = document.querySelector(header.selector);
         console.log(`🔍 선택자 확인: ${header.selector} -> 요소 발견: ${element ? 'YES' : 'NO'}`);
         if (element) {
-            element.textContent = header.text;
-            console.log(`✅ 업데이트 완료: ${header.text}`);
+            const yearSpan = yearText ? ` <span class="year-comparison">${yearText}</span>` : '';
+            element.innerHTML = `${header.text}${yearSpan}`;
+            console.log(`✅ 업데이트 완료: ${header.text}${yearText}`);
         } else {
             console.log(`❌ 요소를 찾을 수 없음: ${header.selector}`);
         }
     });
     
     console.log(`📝 카드 헤더가 ${metricText} 동향으로 업데이트됨`);
+    
+    // 테이블 단위 표시 업데이트
+    updateTableUnits(selectedMetric);
     
     // 차트 제목들도 업데이트
     updateAllChartTitles(selectedMetric);
@@ -2335,20 +2344,48 @@ function updateCropGroupCardHeaders() {
     updateAllCropGroupCards();
 }
 
+// 테이블 단위 표시 업데이트 함수
+function updateTableUnits(metric) {
+    const unit = metric === 'area' ? 'ha' : '톤';
+    const unitText = `단위 : ${unit}, %`;
+    
+    // 각 테이블의 단위 표시 업데이트
+    const unitElements = [
+        'crop-comparison-table-unit',
+        'grain-comparison-table-unit',
+        'vegetable-comparison-table-unit',
+        'fruit-comparison-table-unit',
+        'special-comparison-table-unit'
+    ];
+    
+    unitElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = unitText;
+            console.log(`✅ 단위 업데이트: ${elementId} -> ${unitText}`);
+        } else {
+            console.log(`❌ 단위 요소를 찾을 수 없음: ${elementId}`);
+        }
+    });
+    
+    console.log(`📏 테이블 단위가 ${unitText}로 업데이트됨`);
+}
+
 // 모든 차트 제목을 선택된 측정항목에 따라 업데이트하는 함수
 function updateAllChartTitles(selectedMetric) {
     const metricText = selectedMetric === 'area' ? '재배면적' : '생산량';
     
     // 작목군별 트렌드 차트 제목들
     const chartTitleUpdates = [
-        { id: 'grain-trend-chart-title', text: `<i class="fas fa-chart-line"></i> 식량(계) ${metricText} 및 비중` },
-        { id: 'grain-crops-chart-title', text: `<i class="fas fa-chart-bar"></i> 식량 작목별 비중` },
-        { id: 'vegetable-trend-chart-title', text: `<i class="fas fa-chart-line"></i> 채소(계) ${metricText} 및 비중` },
-        { id: 'vegetable-crops-chart-title', text: `<i class="fas fa-chart-bar"></i> 채소 작목별 비중` },
-        { id: 'fruit-trend-chart-title', text: `<i class="fas fa-chart-line"></i> 과수(계) ${metricText} 및 비중` },
-        { id: 'fruit-crops-chart-title', text: `<i class="fas fa-chart-bar"></i> 과수 작목별 비중` },
-        { id: 'special-trend-chart-title', text: `<i class="fas fa-chart-line"></i> 특약용작물(계) ${metricText} 및 비중` },
-        { id: 'special-crops-chart-title', text: `<i class="fas fa-chart-bar"></i> 특약용작물 작목별 비중` }
+        { id: 'ratio-comparison-chart-title', text: `<i class="fas fa-chart-bar"></i> 전국 대비 강원 ${metricText} 비중 변화` },
+        { id: 'grain-trend-chart-title', text: `<i class="fas fa-chart-line"></i> 식량 ${metricText} 및 비중` },
+        { id: 'grain-crops-chart-title', text: `<i class="fas fa-chart-bar"></i> 전국 대비 식량 작목별 ${metricText} 비중 변화` },
+        { id: 'vegetable-trend-chart-title', text: `<i class="fas fa-chart-line"></i> 채소 ${metricText} 및 비중` },
+        { id: 'vegetable-crops-chart-title', text: `<i class="fas fa-chart-bar"></i> 전국 대비 채소 작목별 ${metricText} 비중 변화` },
+        { id: 'fruit-trend-chart-title', text: `<i class="fas fa-chart-line"></i> 과수 ${metricText} 및 비중` },
+        { id: 'fruit-crops-chart-title', text: `<i class="fas fa-chart-bar"></i> 전국 대비 과수 작목별 ${metricText} 비중 변화` },
+        { id: 'special-trend-chart-title', text: `<i class="fas fa-chart-line"></i> 특약용작물 ${metricText} 및 비중` },
+        { id: 'special-crops-chart-title', text: `<i class="fas fa-chart-bar"></i> 전국 대비 특약용작물 작목별 ${metricText} 비중 변화` }
     ];
     
     chartTitleUpdates.forEach(titleUpdate => {
@@ -2367,10 +2404,16 @@ function updateCultivationCropChangeAnalysisTable(selectedMetric) {
     const metricText = selectedMetric === 'area' ? '재배면적' : '생산량';
     const labelText = selectedMetric === 'area' ? '면적' : '생산량';
     
+    // 년도 정보 가져오기
+    const titleYearA = parseInt(document.getElementById('cultivation-year-a')?.value);
+    const titleYearB = parseInt(document.getElementById('cultivation-year-b')?.value);
+    const yearText = (titleYearA && titleYearB) ? ` (${titleYearA}년 대비 ${titleYearB}년)` : '';
+    
     // 카드 제목 업데이트  
     const cardTitleElement = document.getElementById('cultivation-card-title');
     if (cardTitleElement) {
-        cardTitleElement.textContent = `전국 농산물 ${metricText} 동향`;
+        const yearSpan = yearText ? ` <span class="year-comparison">${yearText}</span>` : '';
+        cardTitleElement.innerHTML = `전국 농산물 ${metricText} 동향${yearSpan}`;
     }
     
     // 표 제목 업데이트
@@ -2457,8 +2500,14 @@ function analyzeCultivationCropChanges(yearA, yearB, selectedMetric) {
         console.log(`🌾 재배동향 ${cropGroup} 공통 작목: ${commonCrops.length}개`);
         
         commonCrops.forEach(cropName => {
-            const cropDataA = cropGroupDataA.find(row => (row.cropName || row['작목명'] || row.crop_name) === cropName);
-            const cropDataB = cropGroupDataB.find(row => (row.cropName || row['작목명'] || row.crop_name) === cropName);
+            const cropDataA = cropGroupDataA.find(row => 
+                (row.cropName || row['작목명'] || row.crop_name) === cropName && 
+                (row.cropGroup || row['작목군'] || row.crop_group) === cropGroup
+            );
+            const cropDataB = cropGroupDataB.find(row => 
+                (row.cropName || row['작목명'] || row.crop_name) === cropName && 
+                (row.cropGroup || row['작목군'] || row.crop_group) === cropGroup
+            );
             
             if (cropDataA && cropDataB) {
                 const valueA = parseFloat(cropDataA[selectedMetric] || cropDataA[selectedMetric === 'area' ? '재배면적' : '생산량'] || 0);
@@ -2522,8 +2571,14 @@ function analyzeCropChanges(yearA, yearB, selectedMetric) {
         console.log(`🌾 ${cropGroup} 공통 작목: ${commonCrops.length}개`);
         
         commonCrops.forEach(cropName => {
-            const cropDataA = cropGroupDataA.find(row => (row.cropName || row['작목명'] || row.crop_name) === cropName);
-            const cropDataB = cropGroupDataB.find(row => (row.cropName || row['작목명'] || row.crop_name) === cropName);
+            const cropDataA = cropGroupDataA.find(row => 
+                (row.cropName || row['작목명'] || row.crop_name) === cropName && 
+                (row.cropGroup || row['작목군'] || row.crop_group) === cropGroup
+            );
+            const cropDataB = cropGroupDataB.find(row => 
+                (row.cropName || row['작목명'] || row.crop_name) === cropName && 
+                (row.cropGroup || row['작목군'] || row.crop_group) === cropGroup
+            );
             
             if (cropDataA && cropDataB) {
                 const valueA = parseFloat(cropDataA[selectedMetric] || cropDataA[selectedMetric === 'area' ? '재배면적' : '생산량'] || 0);
@@ -3511,7 +3566,7 @@ async function updateKPICards() {
     
     const totalArea = targetData.reduce((sum, row) => sum + (row.area || 0), 0);
     const totalProduction = targetData.reduce((sum, row) => sum + (row.production || 0), 0);
-    const cropCount = new Set(targetData.map(row => row.cropName)).size;
+    const cropCount = new Set(targetData.map(row => `${row.cropGroup}|${row.cropName}`)).size;
     
     // 애니메이션과 함께 값 업데이트
     animateNumber('total-area', 0, totalArea, 1500, (n) => Math.round(n).toLocaleString());
@@ -3938,12 +3993,12 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
     // 필터된 데이터 샘플 확인
     if (dataA.length > 0) {
         console.log(`📊 ${region} ${yearA}년 샘플:`, dataA[0]);
-        const uniqueCropsA = [...new Set(dataA.map(row => row.cropName))].filter(crop => crop);
+        const uniqueCropsA = [...new Set(dataA.map(row => `${row.cropGroup}|${row.cropName}`))].filter(crop => crop && !crop.includes('undefined'));
         console.log(`🌾 ${region} ${yearA}년 작목 개수: ${uniqueCropsA.length}개`);
     }
     if (dataB.length > 0) {
         console.log(`📊 ${region} ${yearB}년 샘플:`, dataB[0]);
-        const uniqueCropsB = [...new Set(dataB.map(row => row.cropName))].filter(crop => crop);
+        const uniqueCropsB = [...new Set(dataB.map(row => `${row.cropGroup}|${row.cropName}`))].filter(crop => crop && !crop.includes('undefined'));
         console.log(`🌾 ${region} ${yearB}년 작목 개수: ${uniqueCropsB.length}개`);
     }
     
@@ -3959,9 +4014,9 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
         composition: { increase: [], maintain: [], decrease: [] }
     };
 
-    // 공통 작목만 추출 (두 연도 모두에 존재하는 작목)
-    const cropsA = [...new Set(dataA.map(row => row.cropName))].filter(crop => crop);
-    const cropsB = [...new Set(dataB.map(row => row.cropName))].filter(crop => crop);
+    // 공통 작목만 추출 (두 연도 모두에 존재하는 작목 - 작목군+작목명 조합으로)
+    const cropsA = [...new Set(dataA.map(row => `${row.cropGroup}|${row.cropName}`))].filter(crop => crop && !crop.includes('undefined'));
+    const cropsB = [...new Set(dataB.map(row => `${row.cropGroup}|${row.cropName}`))].filter(crop => crop && !crop.includes('undefined'));
     const commonCrops = cropsA.filter(crop => cropsB.includes(crop));
     
     console.log(`🌾 ${region} A년도 작목: ${cropsA.length}개`, cropsA);
@@ -3975,7 +4030,7 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
 
     // 공통 작목에 대한 총합계 계산 (구성비 계산용)
     const totalValueA = dataA
-        .filter(row => commonCrops.includes(row.cropName))
+        .filter(row => commonCrops.includes(`${row.cropGroup}|${row.cropName}`))
         .reduce((sum, row) => {
             const value = metric === 'area' ? 
                 (parseFloat(row.area) || 0) : 
@@ -3983,7 +4038,7 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
             return sum + value;
         }, 0);
     const totalValueB = dataB
-        .filter(row => commonCrops.includes(row.cropName))
+        .filter(row => commonCrops.includes(`${row.cropGroup}|${row.cropName}`))
         .reduce((sum, row) => {
             const value = metric === 'area' ? 
                 (parseFloat(row.area) || 0) : 
@@ -3998,9 +4053,10 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
     let excludedCount = 0;
     const excludedCrops = [];
 
-    commonCrops.forEach(cropName => {
-        const cropDataA = dataA.find(row => row.cropName === cropName);
-        const cropDataB = dataB.find(row => row.cropName === cropName);
+    commonCrops.forEach(cropKey => {
+        const [cropGroup, cropName] = cropKey.split('|');
+        const cropDataA = dataA.find(row => row.cropName === cropName && row.cropGroup === cropGroup);
+        const cropDataB = dataB.find(row => row.cropName === cropName && row.cropGroup === cropGroup);
         
         if (!cropDataA || !cropDataB) {
             excludedCount++;
@@ -4034,8 +4090,8 @@ function analyzeCultivationTrends(yearA, yearB, metric = 'area', region = '전�
         const compositionB = calculateCompositionRate(valueB, totalValueB);
         const compositionChange = calculateChangeRate(compositionA, compositionB);
         
-        // 작목군 식별
-        const cropGroup = cropDataA?.cropGroup || cropDataB?.cropGroup || '기타';
+        // 작목군 식별 (이미 cropGroup 변수가 있으므로 다른 이름 사용)
+        const detectedCropGroup = cropDataA?.cropGroup || cropDataB?.cropGroup || '기타';
         
         // 분석 결과 저장
         const cropInfo = {
@@ -4341,27 +4397,36 @@ function updateCultivationHeaders(metric) {
     const isArea = metric === 'area';
     const metricText = isArea ? '재배면적' : '생산량';
     
+    // 년도 정보 가져오기
+    const headerYearA = parseInt(document.getElementById('cultivation-year-a')?.value);
+    const headerYearB = parseInt(document.getElementById('cultivation-year-b')?.value);
+    const yearText = (headerYearA && headerYearB) ? ` (${headerYearA}년 대비 ${headerYearB}년)` : '';
+    
     console.log(`🏷️ 헤더 업데이트 시작: ${metricText} 기준으로 모든 카드 제목 변경`);
     
     // 카드 제목 업데이트
     const cardTitle = document.getElementById('cultivation-card-title');
     if (cardTitle) {
-        cardTitle.textContent = `전국 농산물 ${metricText} 동향`;
+        const yearSpan = yearText ? ` <span class="year-comparison">${yearText}</span>` : '';
+        cardTitle.innerHTML = `전국 농산물 ${metricText} 동향${yearSpan}`;
     }
     
     const card2Title = document.getElementById('cultivation-card2-title');
     if (card2Title) {
-        card2Title.textContent = `전국 농산물 ${metricText} 구성비 동향`; // 카드2도 선택된 측정항목에 따라 변경
+        const yearSpan = yearText ? ` <span class="year-comparison">${yearText}</span>` : '';
+        card2Title.innerHTML = `전국 농산물 ${metricText} 구성비 동향${yearSpan}`;
     }
     
     const gangwonCardTitle = document.getElementById('cultivation-gangwon-area-card-title');
     if (gangwonCardTitle) {
-        gangwonCardTitle.textContent = `강원 농산물 ${metricText} 동향`;
+        const yearSpan = yearText ? ` <span class="year-comparison">${yearText}</span>` : '';
+        gangwonCardTitle.innerHTML = `강원 농산물 ${metricText} 동향${yearSpan}`;
     }
     
     const card4Title = document.getElementById('cultivation-card4-title');
     if (card4Title) {
-        card4Title.textContent = `강원 농산물 ${metricText} 구성비 동향`; // 카드4도 선택된 측정항목에 따라 변경
+        const yearSpan = yearText ? ` <span class="year-comparison">${yearText}</span>` : '';
+        card4Title.innerHTML = `강원 농산물 ${metricText} 구성비 동향${yearSpan}`;
     }
     
     
@@ -4823,10 +4888,10 @@ function analyzeCultivationTrendsWithFilter(yearA, yearB, metric = 'area', regio
         console.log(`🗺️ ${region} B년도 샘플:`, dataB[0]);
     }
     
-    // 공통 작목들 찾기 (필터 적용 전)
-    const cropsA = new Set(dataA.map(row => row.cropName));
-    const cropsB = new Set(dataB.map(row => row.cropName));
-    const commonCrops = [...cropsA].filter(crop => cropsB.has(crop));
+    // 공통 작목들 찾기 (필터 적용 전) - 작목군+작목명 조합으로
+    const cropsA = new Set(dataA.map(row => `${row.cropGroup}|${row.cropName}`));
+    const cropsB = new Set(dataB.map(row => `${row.cropGroup}|${row.cropName}`));
+    const commonCrops = [...cropsA].filter(crop => cropsB.has(crop) && crop && !crop.includes('undefined'));
     
     console.log(`📊 공통 작목: ${commonCrops.length}개`);
     
@@ -4842,9 +4907,10 @@ function analyzeCultivationTrendsWithFilter(yearA, yearB, metric = 'area', regio
     let excludedCount = 0;
     const excludedCrops = [];
     
-    commonCrops.forEach(cropName => {
-        const cropA = dataA.find(row => row.cropName === cropName);
-        const cropB = dataB.find(row => row.cropName === cropName);
+    commonCrops.forEach(cropKey => {
+        const [cropGroup, cropName] = cropKey.split('|');
+        const cropA = dataA.find(row => row.cropName === cropName && row.cropGroup === cropGroup);
+        const cropB = dataB.find(row => row.cropName === cropName && row.cropGroup === cropGroup);
         
         if (!cropA || !cropB) return;
         
@@ -4862,7 +4928,7 @@ function analyzeCultivationTrendsWithFilter(yearA, yearB, metric = 'area', regio
         processedCount++;
         
         // 디버깅: 측정항목별 값 비교 로그 (모든 작물의 첫 5개는 항상 로그 출력)
-        const shouldLog = Math.random() < 0.2 || cropName?.includes('인삼') || cropName?.includes('담배') || commonCrops.indexOf(cropName) < 5;
+        const shouldLog = Math.random() < 0.2 || cropName?.includes('인삼') || cropName?.includes('담배') || commonCrops.indexOf(`${cropGroup}|${cropName}`) < 5;
         if (shouldLog) {
             console.log(`📊 [${metric}] ${cropName}:`);
             console.log(`  A년도: ${metric}=${valueA} (area=${cropA.area}, production=${cropA.production})`);
@@ -4896,8 +4962,8 @@ function analyzeCultivationTrendsWithFilter(yearA, yearB, metric = 'area', regio
         
         console.log(`📈 ${cropName}: ${valueA} → ${valueB} (${changeRate.toFixed(1)}%) → ${category} [필터 통과]`);
         
-        // 작목군 분류
-        const cropGroup = cropA.cropGroup || '기타';
+        // 작목군 분류 (이미 cropGroup 변수가 있으므로 기존 값 사용)
+        const actualCropGroup = cropGroup || '기타';
         let groupKey;
         if (cropGroup.includes('식량')) groupKey = 'grain';
         else if (cropGroup.includes('채소')) groupKey = 'vegetable';
@@ -5078,15 +5144,18 @@ function getRankedData(year, region, metric) {
         row.year == year && row.region === region
     );
     
+    console.log(`🔍 getRankedData: ${year}년, ${region}, ${metric} - 원본 데이터: ${data.length}개`);
+    
     // 전국 기준 재배면적 100ha 이상 필터링을 위해 전국 데이터도 가져오기
     const year2 = parseInt(document.getElementById('ranking-year-2')?.value);
     const nationalDataForFilter = appState.data.raw.filter(row => 
         row.year == year2 && row.region === '전국'
     );
     
-    return data
+    const result = data
         .map(row => ({
             cropName: row.cropName,
+            cropGroup: row.cropGroup,
             value: metric === 'area' ? (row.area || 0) : (row.production || 0)
         }))
         .filter(item => {
@@ -5094,7 +5163,9 @@ function getRankedData(year, region, metric) {
             if (item.value <= 0) return false;
             
             // 해당 작목이 선택연도 2의 전국 기준으로 재배면적 100ha 이상인지 확인
-            const nationalCrop = nationalDataForFilter.find(row => row.cropName === item.cropName);
+            const nationalCrop = nationalDataForFilter.find(row => 
+                row.cropName === item.cropName && row.cropGroup === item.cropGroup
+            );
             const nationalArea = nationalCrop ? (nationalCrop.area || 0) : 0;
             
             return nationalArea >= 100;
@@ -5104,6 +5175,9 @@ function getRankedData(year, region, metric) {
             ...item,
             rank: index + 1
         }));
+    
+    console.log(`📊 getRankedData 결과: ${result.length}개 - 상위 5개:`, result.slice(0, 5));
+    return result;
 }
 
 // 점유율 순위 데이터 생성
@@ -5124,20 +5198,25 @@ function getShareRankedData(year, metric) {
     const shareData = [];
     
     gangwonData.forEach(gangwonRow => {
-        const nationalRow = nationalData.find(row => row.cropName === gangwonRow.cropName);
+        const nationalRow = nationalData.find(row => 
+            row.cropName === gangwonRow.cropName && row.cropGroup === gangwonRow.cropGroup
+        );
         if (nationalRow) {
             const gangwonValue = metric === 'area' ? (gangwonRow.area || 0) : (gangwonRow.production || 0);
             const nationalValue = metric === 'area' ? (nationalRow.area || 0) : (nationalRow.production || 0);
             
             if (nationalValue > 0 && gangwonValue > 0) {
                 // 해당 작목이 선택연도 2의 전국 기준으로 재배면적 100ha 이상인지 확인
-                const nationalCropForFilter = nationalDataForFilter.find(row => row.cropName === gangwonRow.cropName);
+                const nationalCropForFilter = nationalDataForFilter.find(row => 
+                    row.cropName === gangwonRow.cropName && row.cropGroup === gangwonRow.cropGroup
+                );
                 const nationalAreaForFilter = nationalCropForFilter ? (nationalCropForFilter.area || 0) : 0;
                 
                 if (nationalAreaForFilter >= 100) {
                     const shareRate = (gangwonValue / nationalValue) * 100;
                     shareData.push({
                         cropName: gangwonRow.cropName,
+                        cropGroup: gangwonRow.cropGroup,
                         shareRate: shareRate
                     });
                 }
@@ -5157,17 +5236,18 @@ function getShareRankedData(year, metric) {
 function renderRankingTableBody(tbody, data1, data2, metric, maxRows = 50) {
     tbody.innerHTML = '';
     
-    // 두 연도의 모든 작목명 수집
+    // 두 연도의 모든 작목 수집 (작목군+작목명 조합으로)
     const allCrops = new Set([
-        ...data1.map(item => item.cropName),
-        ...data2.map(item => item.cropName)
+        ...data1.map(item => `${item.cropGroup || '기타'}|${item.cropName}`),
+        ...data2.map(item => `${item.cropGroup || '기타'}|${item.cropName}`)
     ]);
     
     // data2 기준으로 정렬하여 최대 maxRows개만 표시
     const cropList = Array.from(allCrops)
-        .map(cropName => {
-            const item1 = data1.find(item => item.cropName === cropName);
-            const item2 = data2.find(item => item.cropName === cropName);
+        .map(cropKey => {
+            const [cropGroup, cropName] = cropKey.split('|');
+            const item1 = data1.find(item => item.cropName === cropName && (item.cropGroup || '기타') === cropGroup);
+            const item2 = data2.find(item => item.cropName === cropName && (item.cropGroup || '기타') === cropGroup);
             return {
                 cropName,
                 data1: item1 || { value: 0, rank: '-' },
@@ -5204,17 +5284,18 @@ function renderRankingTableBody(tbody, data1, data2, metric, maxRows = 50) {
 function renderShareRankingTableBody(tbody, data1, data2, maxRows = 50) {
     tbody.innerHTML = '';
     
-    // 두 연도의 모든 작목명 수집
+    // 두 연도의 모든 작목 수집 (작목군+작목명 조합으로)
     const allCrops = new Set([
-        ...data1.map(item => item.cropName),
-        ...data2.map(item => item.cropName)
+        ...data1.map(item => `${item.cropGroup || '기타'}|${item.cropName}`),
+        ...data2.map(item => `${item.cropGroup || '기타'}|${item.cropName}`)
     ]);
     
     // data2 기준으로 정렬하여 최대 maxRows개만 표시
     const cropList = Array.from(allCrops)
-        .map(cropName => {
-            const item1 = data1.find(item => item.cropName === cropName);
-            const item2 = data2.find(item => item.cropName === cropName);
+        .map(cropKey => {
+            const [cropGroup, cropName] = cropKey.split('|');
+            const item1 = data1.find(item => item.cropName === cropName && (item.cropGroup || '기타') === cropGroup);
+            const item2 = data2.find(item => item.cropName === cropName && (item.cropGroup || '기타') === cropGroup);
             return {
                 cropName,
                 data1: item1 || { shareRate: 0, rank: '-' },
@@ -5340,11 +5421,14 @@ function updateSpecializationAnalysis() {
         // 전국 기준 100ha 이상 필터링된 데이터 생성
         const filteredData = filterSpecializationByNationalArea(specializationData, year);
         
+        // threshold가 -1이면 전체 데이터(100ha미만 포함) 사용, 아니면 필터링된 데이터 사용
+        const tableData = threshold === -1 ? specializationData : filteredData;
+        
         // KPI 업데이트 (필터링된 데이터 사용)
         updateSpecializationKPIs(filteredData);
         
-        // 테이블 업데이트 (필터링된 데이터 사용)
-        updateSpecializationTable(filteredData, threshold);
+        // 테이블 업데이트 (threshold에 따라 데이터 선택)
+        updateSpecializationTable(tableData, threshold === -1 ? 0 : threshold);
         
         // 차트 업데이트 (필터링된 데이터 사용)
         // updateSpecializationChart(filteredData, metric);
@@ -5352,8 +5436,8 @@ function updateSpecializationAnalysis() {
         // 특화계수 분류 기준별 현황 업데이트 (전체 데이터 사용)
         updateSpecializationGradeStatus(specializationData);
         
-        // 작목군별 분석 업데이트 (필터링된 데이터 사용)
-        updateCropGroupSpecialization(filteredData);
+        // 작목군별 분석 업데이트 (threshold에 따라 데이터 선택)
+        updateCropGroupSpecialization(tableData);
         
         // 헤더 업데이트 (측정항목에 따라)
         updateSpecializationHeaders(metric);
@@ -5489,7 +5573,9 @@ function calculateSpecializationCoefficients(year, metric) {
     
     // 강원 데이터를 기준으로 특화계수 계산
     gangwonData.forEach(gangwonRow => {
-        const nationalRow = nationalData.find(row => row.cropName === gangwonRow.cropName);
+        const nationalRow = nationalData.find(row => 
+            row.cropName === gangwonRow.cropName && row.cropGroup === gangwonRow.cropGroup
+        );
         
         if (nationalRow) {
             const gangwonValue = metric === 'area' ? (gangwonRow.area || 0) : (gangwonRow.production || 0);
@@ -5540,7 +5626,9 @@ function filterSpecializationByNationalArea(specializationData, year) {
     );
     
     const filteredData = specializationData.filter(item => {
-        const nationalCrop = nationalData.find(row => row.cropName === item.cropName);
+        const nationalCrop = nationalData.find(row => 
+            row.cropName === item.cropName && row.cropGroup === item.cropGroup
+        );
         const nationalArea = nationalCrop ? (nationalCrop.area || 0) : 0;
         
         const isFiltered = nationalArea >= 100;
@@ -5737,7 +5825,7 @@ function updateCropGroupSpecialization(data) {
                     }
                     
                     tag.textContent = `${crop.cropName} (${crop.coefficient.toFixed(1)})`;
-                    tag.title = `특화계수: ${crop.coefficient.toFixed(1)}, 강원 비중: ${crop.gangwonShare.toFixed(2)}%`;
+                    tag.title = `특화계수: ${crop.coefficient.toFixed(1)}`;
                     
                     contentElement.appendChild(tag);
                 });

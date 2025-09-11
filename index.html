@@ -261,10 +261,6 @@
                             <div class="kpi-label">총 재배면적</div>
                             <div class="kpi-unit">ha</div>
                         </div>
-                        <div class="kpi-trend">
-                            <i class="fas fa-arrow-up trend-up"></i>
-                            <span class="trend-value">+12.5%</span>
-                        </div>
                     </div>
                     
                     <div class="kpi-card warning">
@@ -276,10 +272,6 @@
                             <div class="kpi-label">총 생산량</div>
                             <div class="kpi-unit">톤</div>
                         </div>
-                        <div class="kpi-trend">
-                            <i class="fas fa-arrow-up trend-up"></i>
-                            <span class="trend-value">+8.3%</span>
-                        </div>
                     </div>
                     
                     <div class="kpi-card info">
@@ -290,10 +282,6 @@
                             <div class="kpi-value" id="crop-count">0</div>
                             <div class="kpi-label">주요 작물수</div>
                             <div class="kpi-unit">개</div>
-                        </div>
-                        <div class="kpi-trend">
-                            <i class="fas fa-minus trend-neutral"></i>
-                            <span class="trend-value">0.0%</span>
                         </div>
                     </div>
                     
@@ -374,6 +362,9 @@
                                 
                                 <!-- Table Section -->
                                 <div class="table-section">
+                                    <div class="table-header-with-unit">
+                                        <div class="table-unit" id="crop-comparison-table-unit">단위 : ha, %</div>
+                                    </div>
                                     <div class="table-responsive">
                                         <table class="comparison-table" id="crop-comparison-table">
                                             <thead>
@@ -430,7 +421,7 @@
                                     <!-- Chart 2: 전국대비 강원 비중 비교 -->
                                     <div class="chart-card">
                                         <div class="chart-header">
-                                            <h3><i class="fas fa-chart-bar"></i> 전국대비 강원 비중</h3>
+                                            <h3 id="ratio-comparison-chart-title"><i class="fas fa-chart-bar"></i> 전국 대비 강원 비중 변화</h3>
                                         </div>
                                         <div class="chart-container">
                                             <canvas id="ratio-comparison-chart"></canvas>
@@ -453,6 +444,9 @@
                         
                         <!-- Table Section -->
                         <div class="table-section">
+                            <div class="table-header-with-unit">
+                                <div class="table-unit" id="grain-comparison-table-unit">단위 : ha, %</div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="comparison-table" id="grain-comparison-table">
                                     <thead>
@@ -498,7 +492,7 @@
                             <!-- Chart 1: 식량 재배면적/비중 시계열 -->
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="grain-trend-chart-title"><i class="fas fa-chart-line"></i> 식량(계) 재배면적 및 비중</h3>
+                                    <h3 id="grain-trend-chart-title"><i class="fas fa-chart-line"></i> 식량 재배면적 및 비중</h3>
                                 </div>
                                 <div class="chart-container">
                                     <canvas id="grain-trend-chart"></canvas>
@@ -508,7 +502,7 @@
                             <!-- Chart 2: 식량 작목별 비중 비교 -->
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="grain-crops-chart-title"><i class="fas fa-chart-bar"></i> 식량 작목별 비중</h3>
+                                    <h3 id="grain-crops-chart-title"><i class="fas fa-chart-bar"></i> 전국 대비 식량 작목별 비중 변화</h3>
                                 </div>
                                 <div class="chart-container">
                                     <canvas id="grain-crops-chart"></canvas>
@@ -527,6 +521,9 @@
                         
                         <!-- Table Section -->
                         <div class="table-section">
+                            <div class="table-header-with-unit">
+                                <div class="table-unit" id="vegetable-comparison-table-unit">단위 : ha, %</div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="comparison-table" id="vegetable-comparison-table">
                                     <thead>
@@ -572,7 +569,7 @@
                             <!-- Chart 1: 채소 재배면적/비중 시계열 -->
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="vegetable-trend-chart-title"><i class="fas fa-chart-line"></i> 채소(계) 재배면적 및 비중</h3>
+                                    <h3 id="vegetable-trend-chart-title"><i class="fas fa-chart-line"></i> 채소 재배면적 및 비중</h3>
                                 </div>
                                 <div class="chart-container">
                                     <canvas id="vegetable-trend-chart"></canvas>
@@ -582,7 +579,7 @@
                             <!-- Chart 2: 채소 작목별 비중 비교 -->
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="vegetable-crops-chart-title"><i class="fas fa-chart-bar"></i> 채소 작목별 비중</h3>
+                                    <h3 id="vegetable-crops-chart-title"><i class="fas fa-chart-bar"></i> 전국 대비 채소 작목별 비중 변화</h3>
                                 </div>
                                 <div class="chart-container">
                                     <canvas id="vegetable-crops-chart"></canvas>
@@ -601,6 +598,9 @@
                         
                         <!-- Table Section -->
                         <div class="table-section">
+                            <div class="table-header-with-unit">
+                                <div class="table-unit" id="fruit-comparison-table-unit">단위 : ha, %</div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="comparison-table" id="fruit-comparison-table">
                                     <thead>
@@ -646,7 +646,7 @@
                             <!-- Chart 1: 과수 재배면적/비중 시계열 -->
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="fruit-trend-chart-title"><i class="fas fa-chart-line"></i> 과수(계) 재배면적 및 비중</h3>
+                                    <h3 id="fruit-trend-chart-title"><i class="fas fa-chart-line"></i> 과수 재배면적 및 비중</h3>
                                 </div>
                                 <div class="chart-container">
                                     <canvas id="fruit-trend-chart"></canvas>
@@ -656,7 +656,7 @@
                             <!-- Chart 2: 과수 작목별 비중 비교 -->
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="fruit-crops-chart-title"><i class="fas fa-chart-bar"></i> 과수 작목별 비중</h3>
+                                    <h3 id="fruit-crops-chart-title"><i class="fas fa-chart-bar"></i> 전국 대비 과수 작목별 비중 변화</h3>
                                 </div>
                                 <div class="chart-container">
                                     <canvas id="fruit-crops-chart"></canvas>
@@ -675,6 +675,9 @@
                         
                         <!-- Table Section -->
                         <div class="table-section">
+                            <div class="table-header-with-unit">
+                                <div class="table-unit" id="special-comparison-table-unit">단위 : ha, %</div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="comparison-table" id="special-comparison-table">
                                     <thead>
@@ -720,7 +723,7 @@
                             <!-- Chart 1: 특약용작물 재배면적/비중 시계열 -->
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="special-trend-chart-title"><i class="fas fa-chart-line"></i> 특약용작물(계) 재배면적 및 비중</h3>
+                                    <h3 id="special-trend-chart-title"><i class="fas fa-chart-line"></i> 특약용작물 재배면적 및 비중</h3>
                                 </div>
                                 <div class="chart-container">
                                     <canvas id="special-trend-chart"></canvas>
@@ -730,7 +733,7 @@
                             <!-- Chart 2: 특약용작물 작목별 비중 비교 -->
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <h3 id="special-crops-chart-title"><i class="fas fa-chart-bar"></i> 특약용작물 작목별 비중</h3>
+                                    <h3 id="special-crops-chart-title"><i class="fas fa-chart-bar"></i> 전국 대비 특약용작물 작목별 비중 변화</h3>
                                 </div>
                                 <div class="chart-container">
                                     <canvas id="special-crops-chart"></canvas>
@@ -790,7 +793,7 @@
                         <!-- Card Filter Slider -->
                         <div class="card-filter-section">
                             <div class="area-filter-section">
-                                <label>최소 생산량 필터</label>
+                                <label>최소 재배면적 필터 <span class="filter-guidance">비교연도(B) 재배면적을 기준으로 필터링하여 해당 작목명이 표시됩니다.</span></label>
                                 <div class="slider-container horizontal">
                                     <div class="slider-controls">
                                         <div class="slider-wrapper">
@@ -858,6 +861,9 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="classification-criteria">
+                                    <small>분류기준 - 증가: 변화율 +5% 이상, 감소: 변화율 -5% 이하, 유지: -5% ~ +5%</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -871,7 +877,7 @@
                         <!-- Card Filter Slider -->
                         <div class="card-filter-section">
                             <div class="area-filter-section">
-                                <label>최소 재배면적 필터</label>
+                                <label>최소 재배면적 필터 <span class="filter-guidance">비교연도(B) 재배면적을 기준으로 필터링하여 해당 작목명이 표시됩니다.</span></label>
                                 <div class="slider-container horizontal">
                                     <div class="slider-controls">
                                         <div class="slider-wrapper">
@@ -939,6 +945,9 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="classification-criteria">
+                                    <small>분류기준 - 증가: 변화율 +5% 이상, 감소: 변화율 -5% 이하, 유지: -5% ~ +5%</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -952,7 +961,7 @@
                         <!-- Card Filter Slider -->
                         <div class="card-filter-section">
                             <div class="area-filter-section">
-                                <label>최소 재배면적 필터</label>
+                                <label>최소 재배면적 필터 <span class="filter-guidance">비교연도(B) 재배면적을 기준으로 필터링하여 해당 작목명이 표시됩니다.</span></label>
                                 <div class="slider-container horizontal">
                                     <div class="slider-controls">
                                         <div class="slider-wrapper">
@@ -1021,6 +1030,9 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="classification-criteria">
+                                    <small>분류기준 - 증가: 변화율 +5% 이상, 감소: 변화율 -5% 이하, 유지: -5% ~ +5%</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1034,7 +1046,7 @@
                         <!-- Card Filter Slider -->
                         <div class="card-filter-section">
                             <div class="area-filter-section">
-                                <label>최소 재배면적 필터</label>
+                                <label>최소 재배면적 필터 <span class="filter-guidance">비교연도(B) 재배면적을 기준으로 필터링하여 해당 작목명이 표시됩니다.</span></label>
                                 <div class="slider-container horizontal">
                                     <div class="slider-controls">
                                         <div class="slider-wrapper">
@@ -1102,6 +1114,9 @@
                                             </tr>
                                         </tbody>
                                     </table>
+                                </div>
+                                <div class="classification-criteria">
+                                    <small>분류기준 - 증가: 변화율 +5% 이상, 감소: 변화율 -5% 이하, 유지: -5% ~ +5%</small>
                                 </div>
                             </div>
                         </div>
@@ -1609,7 +1624,8 @@
                                     <div class="coefficient-filter">
                                         <label>최소 특화계수</label>
                                         <select id="coefficient-threshold">
-                                            <option value="0">전체 (0.0 이상)</option>
+                                            <option value="-1">전체(100ha미만 포함)</option>
+                                            <option value="0">일반 (0.0 이상)</option>
                                             <option value="1.2" selected>특화작목 (1.2 이상)</option>
                                             <option value="2">고특화 (2.0 이상)</option>
                                             <option value="3">고도특화 (3.0 이상)</option>
@@ -1658,7 +1674,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 강원 농업 재배동향 대시보드. 농림축산식품부, 통계청 자료 활용.</p>
+            <p>&copy; 강원 농업 재배동향 대시보드. 농림축산식품부, 통계청 자료 활용. | 기타 문의: 033-248-6041, 6042</p>
         </div>
     </footer>
 
