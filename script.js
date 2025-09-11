@@ -5929,8 +5929,15 @@ function renderDataTableRows(data, page = 1) {
     const endIndex = startIndex + pageSize;
     const pageData = data.slice(startIndex, endIndex);
     
-    // 테이블 행 생성
-    tbody.innerHTML = '';
+    // 테이블 행 생성 (헤더 위치 유지를 위해 부드럽게 업데이트)
+    // 스크롤 위치 저장
+    const tableWrapper = document.querySelector('.table-wrapper');
+    const scrollTop = tableWrapper ? tableWrapper.scrollTop : 0;
+    
+    // 기존 내용 제거
+    while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+    }
     
     pageData.forEach((row, index) => {
         const tr = document.createElement('tr');
@@ -5944,6 +5951,13 @@ function renderDataTableRows(data, page = 1) {
         `;
         tbody.appendChild(tr);
     });
+    
+    // 스크롤 위치 복원 (약간의 지연을 둬서 DOM이 안정화된 후)
+    if (tableWrapper && scrollTop > 0) {
+        requestAnimationFrame(() => {
+            tableWrapper.scrollTop = scrollTop;
+        });
+    }
     
     // 페이지네이션 업데이트
     updateDataTablePagination(data.length, page, pageSize);

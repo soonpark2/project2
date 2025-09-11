@@ -2215,11 +2215,13 @@ body {
     overflow-x: auto;
     max-height: 600px;
     overflow-y: auto;
+    position: relative;
 }
 
 .data-table {
     width: 100%;
     border-collapse: collapse;
+    position: relative;
 }
 
 .data-table th,
@@ -2235,9 +2237,12 @@ body {
     font-weight: var(--font-weight-semibold);
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 101;
     cursor: pointer;
     user-select: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .data-table th.sortable:hover {
@@ -2272,11 +2277,15 @@ body {
 }
 .data-table th.sort-asc {
     background: var(--primary-dark);
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 101;
 }
 .data-table th.sort-desc {
     background: var(--primary-dark);
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 101;
 }
 .data-table th.sort-asc::after {
     content: '';
