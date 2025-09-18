@@ -5459,12 +5459,8 @@ async function loadDataTableData() {
             return;
         }
         
-        // appState.data.raw를 테이블 형태로 직접 사용 (강원과 전국만 필터링)
+        // appState.data.raw를 테이블 형태로 직접 사용 (모든 지역 포함)
         const flatData = appState.data.raw
-            .filter(row => {
-                const region = row.region || row['지역'] || '';
-                return region === '강원' || region === '전국' || region === '전체' || region === 'national' || region === 'National' || region === '합계';
-            })
             .map(row => ({
                 year: row.year,
                 cropGroup: row.cropGroup || row['작목군'] || row.crop_group || '',
@@ -5476,16 +5472,52 @@ async function loadDataTableData() {
         
         // 전역 변수로 저장
         window.tableData = flatData;
-        
+
+        // region-filter 옵션 설정
+        setupRegionFilter(flatData);
+
         // 통계 업데이트
         updateDataTableStats(flatData.length, flatData.length);
-        
+
         // 테이블 렌더링
         renderDataTableRows(flatData);
-        
-        
+
+
     } catch (error) {
     }
+}
+
+// region-filter 옵션 설정
+function setupRegionFilter(data) {
+    const regionFilter = document.getElementById('region-filter');
+    if (!regionFilter) return;
+
+    // 데이터에서 고유한 지역 추출
+    const uniqueRegions = [...new Set(data.map(row => row.region))]
+        .filter(region => region && region.trim() !== '') // 빈 값 제거
+        .sort(); // 가나다 순 정렬
+
+    // 기존 옵션 제거 (전체 옵션 제외)
+    const allOption = regionFilter.querySelector('option[value="all"]');
+    regionFilter.innerHTML = '';
+
+    // 전체 옵션 추가
+    if (allOption) {
+        regionFilter.appendChild(allOption);
+    } else {
+        const allOption = document.createElement('option');
+        allOption.value = 'all';
+        allOption.textContent = '전체 지역';
+        regionFilter.appendChild(allOption);
+    }
+
+    // 지역 옵션들 추가
+    uniqueRegions.forEach(region => {
+        const option = document.createElement('option');
+        option.value = region;
+        option.textContent = region;
+        regionFilter.appendChild(option);
+    });
 }
 
 // 데이터 테이블 행 렌더링
@@ -7421,17 +7453,9 @@ class CropRankingAnalysis {
             // 개발자 도구에서 보기 좋게 인덱스 추가
             region.setAttribute('data-path-index', index);
 
-            // path 요소의 d 속성을 개발자 도구에서 숨기기
+            // path 요소 정보 백업 (d 속성은 그대로 유지)
             if (region.tagName === 'path' && region.getAttribute('d')) {
-                const dValue = region.getAttribute('d');
-                // d 속성을 data 속성으로 백업하고 짧은 식별자로 교체
-                region.setAttribute('data-path-d', dValue);
                 region.setAttribute('data-path-summary', `path-${index}`);
-
-                // 개발 모드가 아닐 때만 d 속성 최소화
-                if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
-                    region.setAttribute('d', `/* path-${index} */`);
-                }
             }
 
             // 모든 스타일 속성 완전 초기화
@@ -8511,26 +8535,61 @@ class CropRankingAnalysis {
         tbody.innerHTML = topCrops.map(crop => {
             const unit = metric === 'area' ? 'ha' : 't';
 
-            // 모든 지역 데이터를 값 기준으로 정렬 (내림차순)
-            const regionalData = crop.regions
-                .filter(r => r.value > 0) // 0보다 큰 값만
-                .sort((a, b) => b.value - a.value);
+            // 모든 지역 데이터를 값 기준으로 정렬하고 개별 순위 부여
+            const sortedRegions = [...crop.regions].sort((a, b) => {
+                if (b.value !== a.value) {
+                    return b.value - a.value; // 값이 다르면 값 기준 정렬
+                }
+                return a.region.localeCompare(b.region); // 값이 같으면 지역명 가나다순
+            });
+
+            // 순위 맵 생성 (개별 순위 부여)
+            const rankMap = {};
+            let currentRank = 1;
+            let previousValue = null;
+            let sameValueCount = 0;
+
+            sortedRegions.forEach((region, index) => {
+                if (previousValue !== null && region.value === previousValue) {
+                    // 같은 값이지만 개별 순위 부여
+                    sameValueCount++;
+                    rankMap[region.region] = currentRank + sameValueCount;
+                } else {
+                    // 새로운 값
+                    if (previousValue !== null) {
+                        currentRank += sameValueCount + 1;
+                    }
+                    sameValueCount = 0;
+                    rankMap[region.region] = currentRank;
+                    previousValue = region.value;
+                }
+            });
+
+            // 0값 지역들을 마지막 순위부터 역순 배치
+            const zeroValueRegions = sortedRegions.filter(r => r.value === 0);
+            if (zeroValueRegions.length > 0) {
+                const totalRegions = sortedRegions.length;
+                zeroValueRegions.forEach((region, index) => {
+                    rankMap[region.region] = totalRegions - index;
+                });
+            }
+
+            const regionalData = sortedRegions;
 
             // 강원도 데이터 찾기
             const gangwonData = crop.regions.find(r => r.region === '강원');
             const gangwonValue = gangwonData ? gangwonData.value : 0;
             let gangwonHTML = '';
 
-            // 강원도 순위 계산 (정렬된 regionalData에서 위치 확인)
-            const gangwonRank = regionalData.findIndex(r => r.region === '강원') + 1;
+            // 강원도 순위 가져오기
+            const gangwonRank = rankMap['강원'] || sortedRegions.length;
 
             console.log(`${crop.cropName} - 강원도 순위: ${gangwonRank}, 전체 지역 수: ${regionalData.length}`);
 
-            if (gangwonRank > 0) {
-                // 강원도 값 가져오기
-                const gangwonRegionData = regionalData.find(r => r.region === '강원');
-                const value = gangwonRegionData ? gangwonRegionData.value : (gangwonData ? gangwonData.value : 0);
-                const percentage = gangwonRegionData ? gangwonRegionData.percentage : (gangwonData ? gangwonData.percentage : 0);
+            // 강원도 데이터가 있으면 항상 표시 (값이 0이어도 실제 순위 표시)
+            if (gangwonData) {
+                const value = gangwonData.value || 0;
+                const percentage = gangwonData.percentage || 0;
 
                 const safeValue = (typeof value === 'number' && !isNaN(value)) ? value : 0;
                 const safePercentage = (typeof percentage === 'number' && !isNaN(percentage)) ? percentage : 0;
@@ -8540,7 +8599,7 @@ class CropRankingAnalysis {
                     <span class="gangwon-details">(${Math.round(safeValue).toLocaleString()}${unit}, ${safePercentage.toFixed(1)}%)</span>
                 `;
             } else {
-                gangwonHTML = '<span class="gangwon-no-data">-</span>';
+                gangwonHTML = '<span class="gangwon-no-data">-위 (0${unit}, 0.0%)</span>';
             }
 
             let rowHTML = `
@@ -8698,13 +8757,49 @@ class CropRankingAnalysis {
         if (!mapContainer) return;
 
         try {
+            console.log('SVG 지도 로드 시작...');
             const response = await fetch('https://raw.githubusercontent.com/soonpark2/project2/main/전국_시도_경계.svg');
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
             const svgText = await response.text();
+
+            if (!svgText || svgText.trim() === '') {
+                throw new Error('SVG 파일이 비어있습니다');
+            }
+
             mapContainer.innerHTML = svgText;
             console.log('SVG 지도 로드 완료');
+
+            // SVG가 제대로 로드되었는지 확인
+            const svg = mapContainer.querySelector('svg');
+            if (!svg) {
+                throw new Error('SVG 요소를 찾을 수 없습니다');
+            }
+
         } catch (error) {
             console.error('SVG 지도 로드 실패:', error);
-            mapContainer.innerHTML = '<div class="map-error">지도를 불러올 수 없습니다</div>';
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
+
+            // 간단한 한국 지도 fallback
+            mapContainer.innerHTML = `
+                <div class="map-fallback">
+                    <svg viewBox="0 0 400 300" style="width: 100%; height: 300px;">
+                        <rect width="100%" height="100%" fill="#f8fafc" stroke="#e2e8f0"/>
+                        <text x="200" y="150" text-anchor="middle" fill="#6b7280" font-size="16">
+                            지도를 불러올 수 없습니다
+                        </text>
+                        <text x="200" y="170" text-anchor="middle" fill="#9ca3af" font-size="12">
+                            네트워크 연결을 확인해주세요
+                        </text>
+                    </svg>
+                </div>
+            `;
         }
     }
 
