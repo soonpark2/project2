@@ -4721,3 +4721,1340 @@ body:has(.sidebar.collapsed) .main-footer {
     font-weight: normal;
     color: var(--gray-500);
 }
+
+/* ========== CROP RANKING ANALYSIS SECTION ========== */
+
+/* Section Description */
+.section-description {
+    margin-top: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    color: var(--gray-600);
+    font-weight: var(--font-weight-normal);
+}
+
+/* ========== REGIONAL RANKING TABLE SECTION ========== */
+
+/* Regional Ranking Section */
+.regional-ranking-section {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    margin-bottom: var(--spacing-8);
+    overflow: hidden;
+}
+
+.regional-ranking-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-6);
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.regional-ranking-section .section-header h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--gray-800);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.regional-ranking-section .section-header h3 i {
+    color: var(--primary-color);
+}
+
+.table-filters {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: center;
+}
+
+.table-filters select, #page-size {
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    background: var(--white);
+    color: var(--gray-700);
+    min-width: 100px;
+}
+
+/* 테이블 정보 */
+.table-info-legacy {
+    padding: var(--spacing-3) var(--spacing-6);
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+    text-align: center;
+}
+
+.table-info {
+    text-align: center;
+    padding: var(--spacing-3);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-4);
+}
+
+.table-info-content {
+    font-size: var(--font-size-sm);
+    color: var(--gray-600);
+}
+
+/* 작목군 열 스타일링 */
+.crop-group-col {
+    width: 120px;
+    min-width: 120px;
+}
+
+.crop-group {
+    font-size: var(--font-size-sm);
+    color: var(--gray-700);
+    font-weight: var(--font-weight-semibold);
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 작목명 스타일링 */
+.crop-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--gray-800);
+}
+
+/* Regional Ranking Table */
+.table-container {
+    overflow-x: auto;
+    padding: var(--spacing-6);
+}
+
+.regional-ranking-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--font-size-sm);
+    background: var(--white);
+}
+
+.regional-ranking-table th {
+    background: var(--gray-50);
+    padding: var(--spacing-4) var(--spacing-3);
+    text-align: center;
+    font-weight: var(--font-weight-bold);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+    white-space: nowrap;
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.regional-ranking-table th.crop-group-col,
+.regional-ranking-table th.crop-name-col,
+.regional-ranking-table th.total-col,
+.regional-ranking-table th.gangwon-col,
+.regional-ranking-table th.rank-col {
+    width: 12.5%;
+    min-width: 120px;
+    max-width: 120px;
+}
+
+.regional-ranking-table th.total-col {
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--info-color);
+}
+
+.regional-ranking-table th.gangwon-col {
+    text-align: center;
+    background: #fff5f5;
+    font-weight: var(--font-weight-semibold);
+}
+
+.regional-ranking-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.regional-ranking-table td {
+    padding: var(--spacing-2) var(--spacing-1);
+    border: 1px solid var(--gray-300);
+    text-align: center;
+    vertical-align: middle;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+.regional-ranking-table td.crop-name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--gray-800);
+}
+
+.regional-ranking-table td.total-value {
+    font-weight: var(--font-weight-semibold);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: var(--font-size-base);
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--info-color);
+}
+
+.regional-ranking-table td.gangwon-data {
+    text-align: center;
+    background: #fff5f5;
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-2) var(--spacing-1);
+}
+
+.gangwon-rank {
+    font-weight: var(--font-weight-bold);
+    color: var(--danger-color);
+    display: block;
+    margin-bottom: 2px;
+    font-size: var(--font-size-sm);
+}
+
+.gangwon-details {
+    font-size: var(--font-size-xs);
+    color: var(--gray-600);
+    display: block;
+    line-height: 1.2;
+}
+
+.gangwon-no-data {
+    color: var(--gray-400);
+    font-style: italic;
+}
+
+.actual-rank {
+    display: block;
+    font-size: var(--font-size-xs);
+    color: var(--warning-color);
+    font-weight: var(--font-weight-medium);
+    margin-top: 2px;
+    font-style: italic;
+}
+
+.regional-ranking-table td.rank-data {
+    font-size: var(--font-size-sm);
+    line-height: 1.2;
+    padding: var(--spacing-2) var(--spacing-1);
+}
+
+/* Rank Cell Styling */
+.rank-region {
+    font-weight: var(--font-weight-semibold);
+    color: var(--gray-800);
+    display: block;
+    margin-bottom: 2px;
+    font-size: var(--font-size-sm);
+}
+
+.rank-details {
+    color: var(--gray-600);
+    font-size: var(--font-size-xs);
+    display: block;
+    font-family: 'Consolas', 'Monaco', monospace;
+    line-height: 1.2;
+}
+
+/* Rank Position Styles - No colors except Gangwon */
+.regional-ranking-table td.rank-1,
+.regional-ranking-table td.rank-2,
+.regional-ranking-table td.rank-3,
+.regional-ranking-table td.rank-4,
+.regional-ranking-table td.rank-5 {
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+}
+
+/* Gangwon Highlight */
+.regional-ranking-table td.gangwon-highlight {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05)) !important;
+    border: 2px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.regional-ranking-table td.gangwon-highlight .rank-region {
+    color: #dc2626;
+    font-weight: var(--font-weight-bold);
+}
+
+/* Hover Effects - 세련되고 예쁜 호버 디자인 */
+.regional-ranking-table tbody tr {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.regional-ranking-table tbody tr:hover {
+    transform: translateY(-2px) scale(1.005);
+    box-shadow:
+        0 8px 25px rgba(20, 184, 166, 0.12),
+        0 3px 10px rgba(20, 184, 166, 0.08);
+    z-index: 10;
+}
+
+.regional-ranking-table tbody tr:hover td {
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(240, 253, 252, 0.95) 100%) !important;
+    position: relative;
+    overflow: visible;
+}
+
+/* 강원도 셀 호버 시 특별한 색상 */
+.regional-ranking-table tbody tr:hover td.gangwon-data {
+    background: linear-gradient(135deg,
+        rgba(254, 242, 242, 0.95) 0%,
+        rgba(255, 245, 245, 0.9) 100%) !important;
+}
+
+/* 글로우 효과 */
+.regional-ranking-table tbody tr:hover td::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    background: linear-gradient(45deg,
+        rgba(20, 184, 166, 0.3),
+        rgba(59, 130, 246, 0.2),
+        rgba(20, 184, 166, 0.3));
+    border-radius: 6px;
+    z-index: -1;
+    opacity: 0.6;
+    filter: blur(2px);
+}
+
+/* 텍스트 강조 효과 */
+.regional-ranking-table tbody tr:hover .rank-region,
+.regional-ranking-table tbody tr:hover .gangwon-rank {
+    color: var(--primary-color) !important;
+    font-weight: var(--font-weight-bold) !important;
+    text-shadow: 0 1px 2px rgba(20, 184, 166, 0.2);
+}
+
+/* Section Header Layout */
+.regional-ranking-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-6);
+    margin-bottom: var(--spacing-4);
+    padding: var(--spacing-4) var(--spacing-6) var(--spacing-3) var(--spacing-6);
+    background: var(--white);
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.header-left h3 {
+    margin: 0;
+    color: var(--gray-800);
+    font-size: var(--font-size-xl);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+}
+
+/* Quick Search Styles */
+.quick-search-wrapper {
+    position: relative;
+    min-width: 280px;
+}
+
+.search-icon {
+    position: absolute;
+    left: var(--spacing-4);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    font-size: var(--font-size-base);
+    z-index: 2;
+}
+
+#crop-quick-search {
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-10) var(--spacing-3) var(--spacing-10);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    background: var(--gray-50);
+    transition: all 0.2s ease;
+    outline: none;
+    height: 44px;
+    line-height: 1.5;
+}
+
+#crop-quick-search:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+#crop-quick-search::placeholder {
+    color: var(--gray-400);
+    font-style: italic;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: var(--spacing-4);
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    padding: var(--spacing-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 2;
+    font-size: var(--font-size-base);
+}
+
+.clear-search-btn:hover {
+    color: var(--danger-color);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.clear-search-btn.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .regional-ranking-section .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-4);
+        padding: var(--spacing-4);
+    }
+
+    .header-controls {
+        flex-direction: column;
+        gap: var(--spacing-3);
+    }
+
+    .quick-search-wrapper {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .table-filters {
+        display: flex;
+        gap: var(--spacing-3);
+    }
+
+    .table-filters select {
+        flex: 1;
+    }
+
+    .table-filters {
+        justify-content: center;
+    }
+
+    .regional-ranking-table {
+        font-size: var(--font-size-xs);
+    }
+
+    .regional-ranking-table th,
+    .regional-ranking-table td {
+        padding: var(--spacing-2);
+    }
+
+    .regional-ranking-table th.rank-col {
+        min-width: 140px;
+    }
+
+    .rank-details {
+        font-size: 11px;
+    }
+}
+
+
+/* Simple Regional Map Styles */
+.simple-map-container {
+    padding: var(--spacing-2);
+    display: flex;
+    justify-content: center;
+}
+
+.korea-map-svg {
+    width: 100%;
+    max-width: 600px;
+    height: 700px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.korea-map-svg svg {
+    width: 100%;
+    height: 100%;
+}
+
+.map-loading {
+    color: var(--gray-500);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.korea-map-svg-element {
+    background: white;
+}
+
+.region-group {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.region-group:hover .region-path {
+    stroke-width: 3;
+    filter: brightness(0.95);
+}
+
+.region-group.highlight .region-path {
+    fill: rgba(239, 68, 68, 0.2) !important;
+    stroke: #dc2626 !important;
+    stroke-width: 3;
+}
+
+.region-group.highlight .region-label,
+.region-group.highlight .region-value {
+    fill: #dc2626 !important;
+    font-weight: bold;
+}
+
+
+.region-label-small {
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+    fill: var(--gray-800);
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.region-label-tiny {
+    font-size: 12px;
+    font-weight: var(--font-weight-semibold);
+    fill: var(--gray-800);
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.region-value {
+    font-size: 16px;
+    font-weight: var(--font-weight-bold);
+    fill: var(--primary-color);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.region-path {
+    transition: all 0.3s ease;
+}
+
+/* SVG 지도 호버 효과 */
+#korea-svg-map svg path:hover,
+#korea-svg-map svg g:hover path {
+    stroke-width: 2 !important;
+    filter: brightness(1.1);
+    opacity: 0.8;
+    transform-origin: center;
+    cursor: pointer;
+}
+
+#korea-svg-map svg path {
+    transition: all 0.2s ease;
+}
+
+#korea-svg-map svg g {
+    transition: all 0.2s ease;
+}
+
+/* SVG 지도 크기 최적화 */
+#korea-svg-map {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+#korea-svg-map svg {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* 지도가 포함된 카드는 패딩 제거 */
+.visualization-card:has(#korea-svg-map) .card-content {
+    padding: 0;
+}
+
+.visualization-card:has(.map-container) .card-content {
+    padding: 0;
+}
+
+.map-info {
+    text-align: center;
+    padding: var(--spacing-3);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-4);
+}
+
+.map-info p, .map-summary {
+    margin: 0;
+    color: var(--gray-600);
+    font-size: var(--font-size-sm);
+}
+
+.map-attribution {
+    margin-top: var(--spacing-2);
+    padding-top: var(--spacing-2);
+    border-top: 1px solid var(--gray-200);
+    text-align: center;
+}
+
+.map-attribution small {
+    color: var(--gray-500);
+    font-size: var(--font-size-xs);
+}
+
+.map-attribution a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.map-attribution a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .korea-map-svg {
+        max-width: 500px;
+    }
+
+    .region-label {
+        font-size: 14px;
+    }
+
+    .region-label-small {
+        font-size: 12px;
+    }
+
+    .region-label-tiny {
+        font-size: 10px;
+    }
+
+    .region-value {
+        font-size: 12px;
+    }
+}
+
+/* Main Visualization Grid */
+.crop-ranking-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-6);
+    margin-bottom: var(--spacing-8);
+}
+
+@media (max-width: 1200px) {
+    .crop-ranking-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Visualization Cards */
+.visualization-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+}
+
+.visualization-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-6);
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--white);
+}
+
+.visualization-card .card-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--gray-800);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.visualization-card .card-header h3 i {
+    color: var(--primary-color);
+}
+
+.visualization-card .card-content {
+    padding: var(--spacing-6);
+}
+
+/* Chart Controls */
+.chart-controls,
+.map-controls {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: center;
+}
+
+.chart-controls select,
+.map-controls select {
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    background: var(--white);
+    min-width: 120px;
+}
+
+/* Map Container */
+.map-container {
+    position: relative;
+    min-height: 800px;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-placeholder {
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.map-placeholder i {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-4);
+    opacity: 0.5;
+}
+
+.map-placeholder p {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-2);
+}
+
+.map-placeholder small {
+    font-size: var(--font-size-sm);
+    color: var(--gray-400);
+}
+
+/* Map Legend */
+.map-legend {
+    margin-top: var(--spacing-4);
+    padding: var(--spacing-4);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    display: none; /* 데이터 로드 시 표시 */
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    height: 400px;
+}
+
+/* Heatmap Container */
+.heatmap-container {
+    position: relative;
+    min-height: 350px;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.heatmap-placeholder {
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.heatmap-placeholder i {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-3);
+    opacity: 0.5;
+}
+
+
+
+/* Responsive Design for Crop Ranking */
+@media (max-width: 768px) {
+    .crop-ranking-main-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+    }
+
+
+
+    .chart-controls,
+    .map-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-2);
+    }
+}
+
+/* ========== HEATMAP STYLES ========== */
+
+/* Heatmap Grid */
+.heatmap-grid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.heatmap-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4);
+    padding-bottom: var(--spacing-3);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.heatmap-header h4 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--gray-800);
+    margin: 0;
+}
+
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.legend-label {
+    font-size: var(--font-size-xs);
+    color: var(--gray-600);
+}
+
+.legend-gradient {
+    width: 80px;
+    height: 12px;
+    background: linear-gradient(to right,
+        rgba(20, 184, 166, 0.2),
+        rgba(20, 184, 166, 1));
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gray-300);
+}
+
+/* Heatmap Content */
+.heatmap-content {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 280px;
+}
+
+.heatmap-group {
+    margin-bottom: var(--spacing-4);
+}
+
+.heatmap-group-header {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--gray-700);
+    margin-bottom: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--gray-100);
+    border-radius: var(--radius-md);
+}
+
+.heatmap-cells {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--spacing-2);
+}
+
+.heatmap-cell {
+    padding: var(--spacing-3);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    text-align: center;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.heatmap-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.cell-crop-name {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-1);
+    line-height: 1.2;
+}
+
+.cell-value {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-1);
+}
+
+.cell-share {
+    font-size: var(--font-size-xs);
+    opacity: 0.8;
+}
+
+/* Responsive Heatmap */
+@media (max-width: 768px) {
+    .heatmap-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-3);
+    }
+
+    .heatmap-legend {
+        justify-content: center;
+    }
+
+    .heatmap-cells {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: var(--spacing-1);
+    }
+
+    .heatmap-cell {
+        min-height: 70px;
+        padding: var(--spacing-2);
+    }
+
+    .cell-crop-name {
+        font-size: 10px;
+    }
+
+    .cell-value {
+        font-size: var(--font-size-xs);
+    }
+}
+
+/* ========== KOREA MAP STYLES ========== */
+
+/* Korea Map Container */
+.korea-map-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.korea-map-svg {
+    width: 100%;
+    height: 700px;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+}
+
+.map-region {
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.map-region:hover {
+    stroke: var(--primary-color);
+    stroke-width: 3;
+    filter: brightness(1.1);
+}
+
+.region-label {
+    font-size: 18px;
+    font-weight: var(--font-weight-semibold);
+    fill: var(--gray-800);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    user-select: none;
+}
+
+.region-label.main-region {
+    font-weight: var(--font-weight-bold);
+    fill: var(--white);
+    font-size: 20px;
+}
+
+.region-rank {
+    font-size: 12px;
+    font-weight: var(--font-weight-bold);
+    fill: #ffffff;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Map Info */
+.map-info {
+    margin-top: var(--spacing-4);
+    text-align: center;
+}
+
+.map-info h4 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--gray-800);
+    margin: 0 0 var(--spacing-2) 0;
+}
+
+.map-note {
+    font-size: var(--font-size-xs);
+    color: var(--gray-500);
+    font-style: italic;
+    margin: 0;
+}
+
+/* Map Legend Styles */
+.map-legend {
+    margin-top: var(--spacing-4);
+    padding: var(--spacing-4);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-200);
+}
+
+.legend-header h5 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--gray-800);
+    margin: 0 0 var(--spacing-3) 0;
+}
+
+.legend-scale {
+    margin-bottom: var(--spacing-3);
+}
+
+.legend-gradient-bar {
+    height: 12px;
+    background: linear-gradient(to right,
+        rgba(20, 184, 166, 0.2),
+        rgba(20, 184, 166, 1));
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+.legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--gray-600);
+}
+
+.legend-special {
+    display: flex;
+    gap: var(--spacing-4);
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    color: var(--gray-600);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gray-300);
+}
+
+.legend-color.main-region {
+    background: rgba(239, 68, 68, 0.8);
+}
+
+.legend-color.other-region {
+    background: rgba(20, 184, 166, 0.5);
+}
+
+/* Responsive Map */
+@media (max-width: 768px) {
+    .korea-map-svg {
+        height: 500px;
+    }
+
+    .map-container {
+        min-height: 550px;
+    }
+
+    .region-label {
+        font-size: 14px;
+    }
+
+    .region-label.main-region {
+        font-size: 16px;
+    }
+
+    .map-info h4 {
+        font-size: var(--font-size-base);
+    }
+
+    .legend-special {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-2);
+    }
+}
+
+/* ========== YEARLY TREND TABLE STYLES ========== */
+.yearly-trend-table-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+}
+
+.yearly-trend-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.yearly-trend-table th {
+    background: var(--gray-50);
+    color: var(--gray-700);
+    font-weight: var(--font-weight-semibold);
+    padding: var(--spacing-3);
+    text-align: center;
+    border-bottom: 2px solid var(--gray-200);
+    white-space: nowrap;
+}
+
+.yearly-trend-table td {
+    padding: var(--spacing-3);
+    text-align: center;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-600);
+}
+
+.yearly-trend-table tbody tr:hover {
+    background: var(--gray-25);
+}
+
+.yearly-trend-table .category-cell {
+    font-weight: var(--font-weight-medium);
+    color: var(--gray-800);
+    text-align: left;
+    background: var(--gray-25);
+}
+
+.yearly-trend-table .rank-cell {
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
+}
+
+.yearly-trend-table .value-cell {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-weight: var(--font-weight-medium);
+}
+
+.yearly-trend-table .main-region-row {
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.yearly-trend-table .main-region-row .category-cell {
+    color: var(--red-600);
+    font-weight: var(--font-weight-bold);
+}
+
+@media (max-width: 768px) {
+    .yearly-trend-table {
+        font-size: var(--font-size-xs);
+    }
+
+    .yearly-trend-table th,
+    .yearly-trend-table td {
+        padding: var(--spacing-2);
+    }
+}
+
+/* ========== 지도 툴팁 스타일 ========== */
+.map-tooltip {
+    position: fixed !important;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)) !important;
+    color: white !important;
+    padding: var(--spacing-4) !important;
+    border-radius: 12px !important;
+    pointer-events: none;
+    z-index: 99999 !important;
+    opacity: 0;
+    transition: all 0.3s ease;
+    font-size: var(--font-size-sm) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+    min-width: 180px !important;
+    display: none;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.map-tooltip .tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.map-tooltip .tooltip-region {
+    font-weight: var(--font-weight-bold);
+    font-size: 16px !important;
+    color: #60a5fa !important;
+    margin-bottom: var(--spacing-1);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.map-tooltip .tooltip-region::before {
+    content: "📍";
+    font-size: 14px;
+}
+
+.map-tooltip .tooltip-crop {
+    color: #fbbf24 !important;
+    font-weight: var(--font-weight-medium);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.map-tooltip .tooltip-crop::before {
+    content: "🌾";
+    font-size: 14px;
+}
+
+.map-tooltip .tooltip-value {
+    color: #34d399 !important;
+    font-weight: var(--font-weight-semibold);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-size: 15px !important;
+}
+
+.map-tooltip .tooltip-value::before {
+    content: "📊";
+    font-size: 14px;
+}
+
+.map-tooltip .tooltip-rank {
+    color: #fbbf24 !important;
+    font-weight: var(--font-weight-bold);
+    font-size: 15px !important;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-2);
+    background: rgba(251, 191, 36, 0.2);
+    border-radius: 6px;
+    border-left: 3px solid #fbbf24;
+}
+
+.map-tooltip .tooltip-rank::before {
+    content: "🏆";
+    font-size: 14px;
+}
+
+/* ========== 개발자 도구 SVG 표시 개선 ========== */
+/* SVG 컨테이너 정리 */
+#korea-svg-map svg {
+    overflow: hidden;
+    background: transparent;
+}
+
+#korea-svg-map svg path {
+    /* 개발자 도구에서 path 요소들이 더 식별하기 쉽도록 */
+    outline: none;
+}
+
+/* SVG path 요소들에 호버 표시 개선 */
+#korea-svg-map svg path[data-region] {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#korea-svg-map svg path[data-region]:hover {
+    filter: brightness(1.1);
+}
+
+/* Table container and unit styles for yearly trend table */
+.yearly-trend-table-card .table-container {
+    position: relative;
+}
+
+.yearly-trend-table-card .table-unit-top {
+    position: absolute;
+    top: 0;
+    right: 15px;
+    font-size: 13px;
+    color: #6c757d;
+    font-style: italic;
+    background: white;
+    padding: 2px 4px;
+    z-index: 1;
+}
+
+.yearly-trend-table-card .table-notes {
+    margin-top: 8px;
+    padding: 0;
+    border-top: 1px solid #e9ecef;
+    padding-top: 8px;
+}
+
+.yearly-trend-table-card .table-notes p {
+    font-size: 11px;
+    color: #6c757d;
+    margin: 2px 0;
+    line-height: 1.4;
+    font-style: italic;
+}
+
+/* ========== 개발자 도구에서 SVG path d 속성 숨기기 ========== */
+/* Chrome DevTools 스타일링 */
+@media screen {
+    /* 개발자 도구에서 path의 d 속성을 숨기는 CSS */
+    path[d] {
+        --webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+}
+
+/* 개발자 도구 전용 스타일 */
+@supports (-webkit-appearance: none) {
+    #korea-svg-map svg path {
+        /* path 요소의 d 속성을 시각적으로 숨김 */
+        opacity: 0.999; /* 미세한 투명도로 개발자 도구 렌더링 변경 */
+    }
+}

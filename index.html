@@ -45,7 +45,11 @@
                 </a></li>
                 <li><a href="#ranking" class="nav-link" data-section="ranking">
                     <i class="fas fa-medal"></i>
-                    <span>순위분석</span>
+                    <span>작목별 순위분석</span>
+                </a></li>
+                <li><a href="#crop-ranking" class="nav-link" data-section="crop-ranking">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>도별 순위분석</span>
                 </a></li>
                 <li><a href="#specialization" class="nav-link" data-section="specialization">
                     <i class="fas fa-star"></i>
@@ -97,7 +101,7 @@
                                 <i class="fas fa-chart-pie"></i>
                             </div>
                             <h3>대시보드</h3>
-                            <p>전반적인 농업 현황을 한눈에 확인하세요</p>
+                            <p>전국 및 강원 농업 현황을 확인하세요</p>
                             <div class="quick-nav-arrow">
                                 <i class="fas fa-arrow-right"></i>
                             </div>
@@ -108,7 +112,7 @@
                                 <i class="fas fa-chart-line"></i>
                             </div>
                             <h3>작목군별 TOP 5 동향</h3>
-                            <p>주요 작목의 변화 추이를 분석합니다</p>
+                            <p>강원 주요 작목의 변화 추이를 분석합니다</p>
                             <div class="quick-nav-arrow">
                                 <i class="fas fa-arrow-right"></i>
                             </div>
@@ -119,7 +123,7 @@
                                 <i class="fas fa-seedling"></i>
                             </div>
                             <h3>재배동향</h3>
-                            <p>작목별 재배 현황과 동향을 살펴보세요</p>
+                            <p>강원 작목별 재배동향을 살펴보세요</p>
                             <div class="quick-nav-arrow">
                                 <i class="fas fa-arrow-right"></i>
                             </div>
@@ -129,8 +133,19 @@
                             <div class="quick-nav-icon">
                                 <i class="fas fa-medal"></i>
                             </div>
-                            <h3>순위분석</h3>
+                            <h3>작목별 순위분석</h3>
                             <p>작목별 순위를 확인하세요</p>
+                            <div class="quick-nav-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </div>
+
+                        <div class="quick-nav-card" data-section="crop-ranking">
+                            <div class="quick-nav-icon">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                            <h3>도별 순위분석</h3>
+                            <p>어디서 어떤 작목이 많이 재배되는지 확인하세요</p>
                             <div class="quick-nav-arrow">
                                 <i class="fas fa-arrow-right"></i>
                             </div>
@@ -152,7 +167,7 @@
                                 <i class="fas fa-database"></i>
                             </div>
                             <h3>데이터 테이블</h3>
-                            <p>상세 데이터를 조회하고 내보내기 하세요</p>
+                            <p>데이터를 조회하고 내보내기 하세요</p>
                             <div class="quick-nav-arrow">
                                 <i class="fas fa-arrow-right"></i>
                             </div>
@@ -1258,7 +1273,7 @@
                     <!-- Title Section -->
                     <div class="title-section">
                         <div class="comparison-title">
-                            <h2><i class="fas fa-medal"></i> 순위분석</h2>
+                            <h2><i class="fas fa-medal"></i> 작목별 순위분석</h2>
                         </div>
                     </div>
                     
@@ -1302,7 +1317,7 @@
                     <!-- 전국 재배면적/생산량 테이블 -->
                     <div class="ranking-table-card">
                         <div class="ranking-table-header">
-                            <h3 id="national-ranking-title">전국 재배면적</h3>
+                            <h3 id="national-ranking-title">전국 재배면적 순위</h3>
                         </div>
                         <div class="ranking-table-container">
                             <table class="ranking-table" id="national-ranking-table">
@@ -1329,7 +1344,7 @@
                     <!-- 강원 재배면적/생산량 테이블 -->
                     <div class="ranking-table-card">
                         <div class="ranking-table-header">
-                            <h3 id="gangwon-ranking-title">강원 재배면적</h3>
+                            <h3 id="gangwon-ranking-title">강원 재배면적 순위</h3>
                         </div>
                         <div class="ranking-table-container">
                             <table class="ranking-table" id="gangwon-ranking-table">
@@ -1356,7 +1371,7 @@
                     <!-- 전국대비 점유율 테이블 -->
                     <div class="ranking-table-card">
                         <div class="ranking-table-header">
-                            <h3 id="share-ranking-title">전국대비 점유율</h3>
+                            <h3 id="share-ranking-title">전국대비 점유율 순위</h3>
                         </div>
                         <div class="ranking-table-container">
                             <table class="ranking-table" id="share-ranking-table">
@@ -1658,6 +1673,165 @@
                 </div>
             </section>
 
+            <!-- Crop Ranking Analysis Section -->
+            <section id="crop-ranking" class="section">
+                <!-- Header with Title and Controls -->
+                <div class="compact-header">
+                    <div class="title-section">
+                        <div class="comparison-title">
+                            <h2><i class="fas fa-map-marked-alt"></i> 도별 순위분석</h2>
+                        </div>
+                    </div>
+
+                    <div class="controls-section">
+                        <div class="year-selectors">
+                            <div class="year-selector">
+                                <label>분석연도</label>
+                                <select class="year-select" id="crop-ranking-year">
+                                    <!-- DB 연도가 JavaScript로 동적 생성됨 -->
+                                </select>
+                            </div>
+                            <div class="metric-selector">
+                                <label>측정항목</label>
+                                <select class="metric-select" id="crop-ranking-metric">
+                                    <option value="area" selected>재배면적 (ha)</option>
+                                    <option value="production">생산량 (톤)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Regional Ranking Table Section -->
+                <div class="regional-ranking-section">
+                    <div class="section-header">
+                        <div class="header-left">
+                            <h3><i class="fas fa-table"></i> 지역 순위표</h3>
+                        </div>
+                        <div class="header-controls">
+                            <div class="quick-search-wrapper">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="crop-quick-search" placeholder="작목명 검색..." autocomplete="off">
+                                <button type="button" id="clear-search" class="clear-search-btn" title="검색 지우기">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="table-filters">
+                                <select id="ranking-crop-group-filter">
+                                    <!-- 작목군 옵션들이 JavaScript로 동적 생성됨 -->
+                                </select>
+                                <select id="ranking-table-count">
+                                    <option value="10">10개 보기</option>
+                                    <option value="20" selected>20개 보기</option>
+                                    <option value="30">30개 보기</option>
+                                    <option value="50">50개 보기</option>
+                                    <option value="all">전체 보기</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="regional-ranking-table" id="regional-ranking-table">
+                            <thead>
+                                <tr>
+                                    <th class="crop-group-col">작목군</th>
+                                    <th class="crop-name-col">구분</th>
+                                    <th class="total-col">전국(면적)</th>
+                                    <th class="gangwon-col">강원</th>
+                                    <th class="rank-col">1위</th>
+                                    <th class="rank-col">2위</th>
+                                    <th class="rank-col">3위</th>
+                                    <th class="rank-col">4위</th>
+                                    <th class="rank-col">5위</th>
+                                </tr>
+                            </thead>
+                            <tbody id="regional-ranking-tbody">
+                                <!-- JavaScript로 동적 생성 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-info" id="ranking-table-info">
+                        <!-- 테이블 정보가 여기에 표시됩니다 -->
+                    </div>
+                </div>
+
+                <!-- Main Visualization Section -->
+                <div class="crop-ranking-main-grid">
+                    <!-- Simple Regional Map Section -->
+                    <div class="visualization-card simple-map-card">
+                        <div class="card-header">
+                            <h3 id="simple-map-header"><i class="fas fa-map-marked-alt"></i> 재배 현황</h3>
+                            <div class="map-controls">
+                                <select id="simple-map-crop-group-filter">
+                                    <option value="">작목군 선택</option>
+                                    <option value="식량">식량</option>
+                                    <option value="채소">채소</option>
+                                    <option value="과수">과수</option>
+                                    <option value="특약용작물">특약용작물</option>
+                                </select>
+                                <select id="simple-map-crop-filter">
+                                    <option value="">작목 선택</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="simple-map-container" id="simple-regional-map">
+                                <div class="map-wrapper">
+                                    <div id="korea-svg-map" class="korea-map-svg">
+                                        <!-- Korea SVG map will be loaded here -->
+                                        <div class="map-loading">지도를 불러오는 중...</div>
+                                    </div>
+                                    <!-- 커스텀 툴팁 -->
+                                    <div id="map-tooltip" class="map-tooltip">
+                                        <div class="tooltip-content">
+                                            <div class="tooltip-region"></div>
+                                            <div class="tooltip-crop"></div>
+                                            <div class="tooltip-value"></div>
+                                            <div class="tooltip-rank"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="map-overlay" id="map-overlay">
+                                    <!-- 지역별 값 표시용 오버레이 -->
+                                </div>
+                            </div>
+                            <div class="map-info" id="simple-map-info">
+                                <p>작목을 선택하면 지역별 재배 현황을 보여줍니다</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Yearly Trend Table -->
+                    <div class="visualization-card yearly-trend-table-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-table"></i> <span id="yearly-trend-title">작물별 연도별 동향</span></h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="table-container">
+                                <div class="table-unit-top" id="yearly-trend-unit">단위 : ha</div>
+                                <table id="yearly-trend-table" class="yearly-trend-table">
+                                    <thead>
+                                        <tr id="yearly-trend-header">
+                                            <th>구분</th>
+                                            <!-- 연도 헤더들이 동적으로 추가됩니다 -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="yearly-trend-body">
+                                        <!-- 표 내용이 동적으로 추가됩니다 -->
+                                    </tbody>
+                                </table>
+                                <div class="table-notes">
+                                    <p class="table-note" id="yearly-trend-ranking-note">※ 순위 : 마지막 연도 기준 순위</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
         </div>
     </main>
 
@@ -1667,6 +1841,7 @@
             <div class="footer-section">
                 <h4>데이터 출처</h4>
                 <p>본 자료는 「농림축산식품부」(시설채소온실현황 및 생산실적, 특용작물생산실적)와 「통계청」(농작물생산조사, 농업면적조사)의 통계표를 활용하여 재가공한 자료입니다.</p>
+                <p class="map-source">지도 데이터: 통계청 SGIS 오픈 API, <a href="https://github.com/statgarten/maps" target="_blank" rel="noopener">statgarten/maps</a></p>
             </div>
             <div class="footer-section">
                 <h4>이용 안내</h4>
