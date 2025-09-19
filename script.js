@@ -7481,11 +7481,32 @@ class CropRankingAnalysis {
             region.onmouseleave = null;
             region.onmousemove = null;
             region.onclick = null;
+
+            // addEventListener로 추가된 이벤트 리스너도 제거
+            if (region._mouseenterHandler) {
+                region.removeEventListener('mouseenter', region._mouseenterHandler);
+                region._mouseenterHandler = null;
+            }
+            if (region._mouseleaveHandler) {
+                region.removeEventListener('mouseleave', region._mouseleaveHandler);
+                region._mouseleaveHandler = null;
+            }
         });
 
         // 모든 레이블과 텍스트 요소 제거
         const labels = svg.querySelectorAll('[id^="label-"], text, g[data-label], g[data-region-label], [class*="label"], [class*="rank"]');
-        labels.forEach(label => label.remove());
+        labels.forEach(label => {
+            // 레이블의 이벤트 리스너도 제거
+            if (label._mouseenterHandler) {
+                label.removeEventListener('mouseenter', label._mouseenterHandler);
+                label._mouseenterHandler = null;
+            }
+            if (label._mouseleaveHandler) {
+                label.removeEventListener('mouseleave', label._mouseleaveHandler);
+                label._mouseleaveHandler = null;
+            }
+            label.remove();
+        });
 
         // 추가로 모든 텍스트 요소와 그룹 요소 중 레이블 관련 요소들 제거
         const allTexts = svg.querySelectorAll('text');
@@ -7519,6 +7540,17 @@ class CropRankingAnalysis {
             // 레이블과 관련된 모든 circle 제거 (조건 완화)
             circle.remove();
         });
+
+        // 툴팁 완전 제거
+        const existingTooltip = document.getElementById('map-tooltip');
+        if (existingTooltip) {
+            existingTooltip.remove();
+        }
+
+        // 툴팁 관련 이벤트 리스너도 제거 (cropRankingAnalysis 인스턴스가 있는 경우)
+        if (window.cropRankingAnalysis && window.cropRankingAnalysis.hideTooltip) {
+            window.cropRankingAnalysis.hideTooltip();
+        }
 
         const allEllipses = svg.querySelectorAll('ellipse');
         allEllipses.forEach(ellipse => {
@@ -8868,7 +8900,8 @@ class CropRankingAnalysis {
         // 지역별 데이터 적용
         regionalData.forEach((regionData, index) => {
             const { region, value } = regionData;
-            const rank = sortedData.findIndex(item => item.region === region) + 1;
+            // 값이 0보다 큰 경우만 순위에 포함, 0인 경우는 순위 없음으로 처리
+            const rank = value > 0 ? (sortedData.findIndex(item => item.region === region) + 1) : null;
 
             // 해당 지역의 SVG path 찾기
             let targetPath = null;
@@ -8941,8 +8974,71 @@ class CropRankingAnalysis {
                 targetPath.style.stroke = '#333';
                 targetPath.style.strokeWidth = '2';
 
-                // 툴팁 생성
-                this.showTooltip(e, region, rank, value, unit, selectedCrop);
+                // 툴팁 생성 (현재 데이터를 실시간으로 조회)
+                const currentSelectedCrop = document.getElementById('simple-map-crop-filter')?.value || '';
+                const currentMetric = this.currentFilters.metric || 'area';
+                const currentUnit = currentMetric === 'area' ? 'ha' : 't';
+
+                // 현재 선택된 작목과 지역에 해당하는 실시간 데이터 조회
+                const filteredData = this.getFilteredData();
+                const regionData = filteredData.find(item =>
+                    item.지역 === region && item.작목명 === currentSelectedCrop
+                );
+
+                const currentValue = regionData ?
+                    (currentMetric === 'area' ? parseFloat(regionData['면적(ha)']) || 0 : parseFloat(regionData['생산량(톤)']) || 0) : 0;
+
+                // 순위 재계산 (테이블과 동일한 방식)
+                const regionalValues = [];
+                filteredData.forEach(item => {
+                    if (item.작목명 === currentSelectedCrop && item.지역 !== '전국') {
+                        const val = currentMetric === 'area' ? parseFloat(item['면적(ha)']) || 0 : parseFloat(item['생산량(톤)']) || 0;
+                        regionalValues.push({
+                            region: item.지역,
+                            value: val
+                        });
+                    }
+                });
+
+                // 값 기준으로 정렬하고 개별 순위 부여 (테이블과 동일한 로직)
+                const sortedRegions = [...regionalValues].sort((a, b) => {
+                    if (b.value !== a.value) {
+                        return b.value - a.value;
+                    }
+                    return a.region.localeCompare(b.region);
+                });
+
+                const rankMap = {};
+                let rankPosition = 1;
+                let previousValue = null;
+                let sameValueCount = 0;
+
+                sortedRegions.forEach((regionData, index) => {
+                    if (previousValue !== null && regionData.value === previousValue) {
+                        sameValueCount++;
+                        rankMap[regionData.region] = rankPosition + sameValueCount;
+                    } else {
+                        if (previousValue !== null) {
+                            rankPosition += sameValueCount + 1;
+                        }
+                        sameValueCount = 0;
+                        rankMap[regionData.region] = rankPosition;
+                        previousValue = regionData.value;
+                    }
+                });
+
+                // 0값 지역들을 마지막 순위부터 역순 배치
+                const zeroValueRegions = sortedRegions.filter(r => r.value === 0);
+                if (zeroValueRegions.length > 0) {
+                    const totalRegions = sortedRegions.length;
+                    zeroValueRegions.forEach((regionData, index) => {
+                        rankMap[regionData.region] = totalRegions - index;
+                    });
+                }
+
+                const currentRank = rankMap[region] || null;
+
+                this.showTooltip(e, region, currentRank, currentValue, currentUnit, currentSelectedCrop);
             };
 
             targetPath._mouseleaveHandler = (e) => {
@@ -9018,8 +9114,71 @@ class CropRankingAnalysis {
                     // 라벨을 맨 앞으로 가져오기
                     svg.appendChild(labelGroup);
 
-                    // 툴팁 표시
-                    this.showTooltip(e, region, rank, value, unit, selectedCrop);
+                    // 툴팁 표시 (현재 데이터를 실시간으로 조회)
+                    const currentSelectedCrop = document.getElementById('simple-map-crop-filter')?.value || '';
+                    const currentMetric = this.currentFilters.metric || 'area';
+                    const currentUnit = currentMetric === 'area' ? 'ha' : 't';
+
+                    // 현재 선택된 작목과 지역에 해당하는 실시간 데이터 조회
+                    const filteredData = this.getFilteredData();
+                    const regionData = filteredData.find(item =>
+                        item.지역 === region && item.작목명 === currentSelectedCrop
+                    );
+
+                    const currentValue = regionData ?
+                        (currentMetric === 'area' ? parseFloat(regionData['면적(ha)']) || 0 : parseFloat(regionData['생산량(톤)']) || 0) : 0;
+
+                    // 순위 재계산 (테이블과 동일한 방식)
+                    const regionalValues = [];
+                    filteredData.forEach(item => {
+                        if (item.작목명 === currentSelectedCrop && item.지역 !== '전국') {
+                            const val = currentMetric === 'area' ? parseFloat(item['면적(ha)']) || 0 : parseFloat(item['생산량(톤)']) || 0;
+                            regionalValues.push({
+                                region: item.지역,
+                                value: val
+                            });
+                        }
+                    });
+
+                    // 값 기준으로 정렬하고 개별 순위 부여 (테이블과 동일한 로직)
+                    const sortedRegions = [...regionalValues].sort((a, b) => {
+                        if (b.value !== a.value) {
+                            return b.value - a.value;
+                        }
+                        return a.region.localeCompare(b.region);
+                    });
+
+                    const rankMap = {};
+                    let rankPosition = 1;
+                    let previousValue = null;
+                    let sameValueCount = 0;
+
+                    sortedRegions.forEach((regionData, index) => {
+                        if (previousValue !== null && regionData.value === previousValue) {
+                            sameValueCount++;
+                            rankMap[regionData.region] = rankPosition + sameValueCount;
+                        } else {
+                            if (previousValue !== null) {
+                                rankPosition += sameValueCount + 1;
+                            }
+                            sameValueCount = 0;
+                            rankMap[regionData.region] = rankPosition;
+                            previousValue = regionData.value;
+                        }
+                    });
+
+                    // 0값 지역들을 마지막 순위부터 역순 배치
+                    const zeroValueRegions = sortedRegions.filter(r => r.value === 0);
+                    if (zeroValueRegions.length > 0) {
+                        const totalRegions = sortedRegions.length;
+                        zeroValueRegions.forEach((regionData, index) => {
+                            rankMap[regionData.region] = totalRegions - index;
+                        });
+                    }
+
+                    const currentRank = rankMap[region] || null;
+
+                    this.showTooltip(e, region, currentRank, currentValue, currentUnit, currentSelectedCrop);
                 };
 
                 labelGroup._mouseleaveHandler = (e) => {
@@ -9071,10 +9230,11 @@ class CropRankingAnalysis {
         `;
 
         const metric = this.currentFilters.metric === 'area' ? '재배면적' : '생산량';
+        const rankText = rank ? `${rank}위` : '순위 없음';
         tooltip.innerHTML = `
             <div style="font-weight: bold; margin-bottom: 4px;">${region}</div>
             <div>${cropName} ${metric}: ${Math.round(value).toLocaleString()}${unit}</div>
-            <div>순위: ${rank}위</div>
+            <div>순위: ${rankText}</div>
         `;
 
         document.body.appendChild(tooltip);
