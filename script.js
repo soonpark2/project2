@@ -1727,9 +1727,9 @@ function updateCropGroupRows(gangwonGroupsA, gangwonGroupsB, nationalGroupsA, na
         
         const nationalValueA = nationalGroupsA[cropGroup] || 0;
         const nationalValueB = nationalGroupsB[cropGroup] || 0;
-        
-        const ratioA = nationalTotalA > 0 ? (gangwonValueA / nationalTotalA * 100) : 0;
-        const ratioB = nationalTotalB > 0 ? (gangwonValueB / nationalTotalB * 100) : 0;
+
+        const ratioA = nationalValueA > 0 ? (gangwonValueA / nationalValueA * 100) : 0;
+        const ratioB = nationalValueB > 0 ? (gangwonValueB / nationalValueB * 100) : 0;
         
         const nationalChangeRate = nationalValueA > 0 ? ((nationalValueB - nationalValueA) / nationalValueA * 100) : 0;
         const gangwonChangeRate = gangwonValueA > 0 ? ((gangwonValueB - gangwonValueA) / gangwonValueA * 100) : 0;
