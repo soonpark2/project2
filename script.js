@@ -474,6 +474,27 @@ function showSection(sectionId) {
         // 재배동향 섹션이 표시될 때 슬라이더 설정
         if (sectionId === 'cultivation') {
             setTimeout(() => {
+                // 이벤트 리스너 등록 (한 번만 등록되도록 플래그 사용)
+                if (!window.cultivationEventListenersRegistered) {
+                    const cultivationYearA = document.getElementById('cultivation-year-a');
+                    const cultivationYearB = document.getElementById('cultivation-year-b');
+                    const cultivationTrendMetric = document.getElementById('cultivation-trend-metric');
+
+                    if (cultivationYearA) {
+                        cultivationYearA.addEventListener('change', handleCultivationChange);
+                        console.log('cultivation-year-a 이벤트 리스너 등록됨');
+                    }
+                    if (cultivationYearB) {
+                        cultivationYearB.addEventListener('change', handleCultivationChange);
+                        console.log('cultivation-year-b 이벤트 리스너 등록됨');
+                    }
+                    if (cultivationTrendMetric) {
+                        cultivationTrendMetric.addEventListener('change', handleCultivationChange);
+                        console.log('cultivation-trend-metric 이벤트 리스너 등록됨');
+                    }
+                    window.cultivationEventListenersRegistered = true;
+                }
+
                 setupCardAreaFilterSliders();
                 // 슬라이더 설정 후 초기 데이터 업데이트 (데이터 로딩 확인)
                 setTimeout(() => {
@@ -2331,8 +2352,8 @@ function updateCultivationCropChangeAnalysisTable(selectedMetric) {
         // 재배면적 동향 테이블 업데이트 (슬라이더는 재배면적 기준이므로 'area' 유지)
         updateCultivationTrendTable('cultivation-crop-change-analysis-table', nationalAnalysis, 'area');
         
-        // 구성비 동향 테이블 업데이트 (카드2는 재배면적 필터이므로 'area' 유지)
-        updateCultivationTrendTable('cultivation-crop-composition-analysis-table', nationalAnalysis, 'area');
+        // 구성비 동향 테이블 업데이트
+        updateCultivationTrendTable('cultivation-crop-composition-analysis-table', nationalAnalysis, 'composition');
     }
 
     // 강원도 데이터 분석 (선택된 측정 항목으로 분석하되, 테이블 타입은 재배면적 기준 유지)
@@ -2341,8 +2362,8 @@ function updateCultivationCropChangeAnalysisTable(selectedMetric) {
         // 강원 재배면적 동향 테이블 업데이트 (슬라이더는 재배면적 기준이므로 'area' 유지)
         updateCultivationTrendTable('cultivation-gangwon-crop-change-analysis-table', gangwonAnalysis, 'area');
         
-        // 강원 구성비 동향 테이블 업데이트 (카드4는 재배면적 필터이므로 'area' 유지)
-        updateCultivationTrendTable('cultivation-gangwon-crop-composition-analysis-table', gangwonAnalysis, 'area');
+        // 강원 구성비 동향 테이블 업데이트
+        updateCultivationTrendTable('cultivation-gangwon-crop-composition-analysis-table', gangwonAnalysis, 'composition');
     }
 }
 
@@ -2601,12 +2622,9 @@ function setupCultivationControls() {
 
 // 재배동향 탭 변경 핸들러
 function handleCultivationChange() {
-    const selectedMetric = document.getElementById('cultivation-trend-metric')?.value || 'area';
-    
-    
-    // 증감 분석 표 업데이트
-    updateCultivationCropChangeAnalysisTable(selectedMetric);
-    
+    // 메인 업데이트 함수 호출
+    updateCultivationSection();
+
     // 슬라이더 필터 다시 적용 (측정 항목 변경 시 필터링된 테이블도 업데이트)
     setTimeout(() => {
         const cardConfigs = [
@@ -2615,7 +2633,7 @@ function handleCultivationChange() {
             { id: 'card3', sliderId: 'card3-area-filter-slider' },
             { id: 'card4', sliderId: 'card4-area-filter-slider' }
         ];
-        
+
         cardConfigs.forEach(config => {
             const slider = document.getElementById(config.sliderId);
             if (slider && slider.value > 0) {
@@ -2624,7 +2642,7 @@ function handleCultivationChange() {
             }
         });
     }, 100);
-    
+
 }
 
 // 작목군별 TOP5 탭의 증감 분석 표 업데이트 함수
@@ -4017,15 +4035,21 @@ function updateCultivationSection() {
 
     // 전국 데이터 분석 (선택된 측정 항목으로 분석)
     const nationalAnalysis = analyzeCultivationTrends(yearA, yearB, selectedMetric, '전국');
+    console.log('전국 분석 결과:', nationalAnalysis);
     if (nationalAnalysis) {
-        
+        console.log('전국 area:', nationalAnalysis.area);
+        console.log('전국 composition:', nationalAnalysis.composition);
+
         // 카드1: 전국 농산물 재배면적/생산량 동향 테이블 업데이트 (선택된 측정항목으로 분석)
         updateCultivationTrendTable('cultivation-crop-change-analysis-table', nationalAnalysis, 'area');
-        
-        // 카드2: 전국 농산물 재배면적/생산량 구성비 동향 테이블 업데이트 (선택된 측정항목으로 분석)
-        updateCultivationTrendTable('cultivation-crop-composition-analysis-table', nationalAnalysis, 'area');
-        
+
+        // 카드2: 전국 농산물 재배면적/생산량 구성비 동향 테이블 업데이트
+        console.log('구성비 테이블 업데이트 시작');
+        updateCultivationTrendTable('cultivation-crop-composition-analysis-table', nationalAnalysis, 'composition');
+        console.log('구성비 테이블 업데이트 완료');
+
     } else {
+        console.log('전국 분석 결과 없음');
     }
 
     // 강원도 데이터 분석 (선택된 측정 항목으로 분석)
@@ -4035,8 +4059,8 @@ function updateCultivationSection() {
         // 카드3: 강원 농산물 재배면적/생산량 동향 테이블 업데이트 (선택된 측정항목으로 분석)
         updateCultivationTrendTable('cultivation-gangwon-crop-change-analysis-table', gangwonAnalysis, 'area');
         
-        // 카드4: 강원 농산물 재배면적/생산량 구성비 동향 테이블 업데이트 (선택된 측정항목으로 분석)
-        updateCultivationTrendTable('cultivation-gangwon-crop-composition-analysis-table', gangwonAnalysis, 'area');
+        // 카드4: 강원 농산물 재배면적/생산량 구성비 동향 테이블 업데이트
+        updateCultivationTrendTable('cultivation-gangwon-crop-composition-analysis-table', gangwonAnalysis, 'composition');
         
     } else {
     }
@@ -4103,26 +4127,8 @@ function updateCultivationHeaders(metric) {
 
 // 재배동향 이벤트 리스너 초기화
 function initCultivationEventListeners() {
-    // 연도 선택 이벤트
-    const yearASelect = document.getElementById('cultivation-year-a');
-    const yearBSelect = document.getElementById('cultivation-year-b');
-    const metricSelect = document.getElementById('cultivation-trend-metric');
-    
-    if (yearASelect) {
-        yearASelect.addEventListener('change', updateCultivationSection);
-    }
-    
-    if (yearBSelect) {
-        yearBSelect.addEventListener('change', updateCultivationSection);
-    }
-    
-    if (metricSelect) {
-        metricSelect.addEventListener('change', (event) => {
-            const newMetric = event.target.value;
-            updateCultivationSection();
-        });
-    }
-
+    // 이벤트 리스너는 setupCultivationControls()에서 이미 등록됨
+    // 중복 등록을 방지하기 위해 여기서는 등록하지 않음
 }
 
 // 초기화 함수 - 기존 초기화 코드에 추가
@@ -4506,104 +4512,107 @@ function analyzeCultivationTrendsWithFilter(yearA, yearB, metric = 'area', regio
     
     // 작목군별로 데이터 분석
     const cropGroups = ['식량', '채소', '과수', '특약용작물'];
-    const results = {
-        increase: { total: 0, grain: [], vegetable: [], fruit: [], special: [] },
-        maintain: { total: 0, grain: [], vegetable: [], fruit: [], special: [] },
-        decrease: { total: 0, grain: [], vegetable: [], fruit: [], special: [] }
+    const areaResults = {
+        increase: [],
+        maintain: [],
+        decrease: []
     };
-    
+    const compositionResults = {
+        increase: [],
+        maintain: [],
+        decrease: []
+    };
+
     let processedCount = 0;
     let excludedCount = 0;
     const excludedCrops = [];
-    
+
+    // 모든 공통 작목의 데이터 추출 (구성비 계산용 - 전체 기준)
+    const allCommonCropsData = [];
     commonCrops.forEach(cropKey => {
         const [cropGroup, cropName] = cropKey.split('|');
         const cropA = dataA.find(row => row.cropName === cropName && row.cropGroup === cropGroup);
         const cropB = dataB.find(row => row.cropName === cropName && row.cropGroup === cropGroup);
-        
+
         if (!cropA || !cropB) return;
-        
+
         const valueA = metric === 'area' ? (cropA.area || 0) : (cropA.production || 0);
         const valueB = metric === 'area' ? (cropB.area || 0) : (cropB.production || 0);
-        
+
         // 생산량 기준 분석일 때, 생산량 데이터가 모두 0이거나 없는 경우 제외
         if (metric === 'production' && (valueA === 0 && valueB === 0)) {
-            excludedCount++;
-            excludedCrops.push(cropName);
             return;
         }
-        
-        processedCount++;
-        
-        // 디버깅: 측정항목별 값 비교 로그 (모든 작물의 첫 5개는 항상 로그 출력)
-        const shouldLog = Math.random() < 0.2 || cropName?.includes('인삼') || cropName?.includes('담배') || commonCrops.indexOf(`${cropGroup}|${cropName}`) < 5;
-        if (shouldLog) {
-        }
-        
-        // 증감 판정 (필터와 상관없이 동일하게 계산)
-        const changeRate = valueA === 0 ? 0 : ((valueB - valueA) / valueA) * 100;
-        let category;
-        if (changeRate > 5) category = 'increase';
-        else if (changeRate < -5) category = 'decrease';
-        else category = 'maintain';
-        
-        // 필터링 조건 확인: 슬라이더는 항상 재배면적 기준으로 필터링
-        // "최소 재배면적" 필터는 현재(B년도) 재배면적 기준으로 적용
+
+        allCommonCropsData.push({ cropKey, cropGroup, cropName, cropA, cropB, valueA, valueB });
+    });
+
+    // 전체 작목의 총합계 계산 (구성비 계산용 - 필터 무관)
+    let totalValueA = 0;
+    let totalValueB = 0;
+    allCommonCropsData.forEach(item => {
+        totalValueA += item.valueA;
+        totalValueB += item.valueB;
+    });
+
+    // 각 작목별로 분석 (구성비는 전체 기준, 표시는 필터 적용)
+    allCommonCropsData.forEach(item => {
+        const { cropKey, cropGroup, cropName, cropA, cropB, valueA, valueB } = item;
+
+        // 면적/생산량 변화율 계산
+        const valueChangeRate = valueA === 0 ? 0 : ((valueB - valueA) / valueA) * 100;
+        let valueCategory;
+        if (valueChangeRate >= 5) valueCategory = 'increase';
+        else if (valueChangeRate <= -5) valueCategory = 'decrease';
+        else valueCategory = 'maintain';
+
+        // 구성비 변화율 계산 (전체 작목 기준)
+        const compositionA = totalValueA === 0 ? 0 : (valueA / totalValueA) * 100;
+        const compositionB = totalValueB === 0 ? 0 : (valueB / totalValueB) * 100;
+        const compositionChangeRate = compositionA === 0 ? 0 : ((compositionB - compositionA) / compositionA) * 100;
+        let compositionCategory;
+        if (compositionChangeRate >= 5) compositionCategory = 'increase';
+        else if (compositionChangeRate <= -5) compositionCategory = 'decrease';
+        else compositionCategory = 'maintain';
+
+        // 필터링 조건 확인: 필터를 만족하지 않으면 표시하지 않음
         if (filterValue > 0) {
-            const areaB = cropB.area || 0; // 항상 재배면적으로 필터링
+            const areaB = cropB.area || 0;
             if (areaB < filterValue) {
-                return; // 필터 조건을 만족하지 않으면 제외
+                return; // 표시하지 않지만, 구성비 계산에는 이미 포함됨
             }
         }
-        
+
         // 데이터 유효성 검증
         if (!cropName || cropName === undefined || cropName === null) {
             return;
         }
-        
-        
-        // 작목군 분류 (이미 cropGroup 변수가 있으므로 기존 값 사용)
-        const actualCropGroup = cropGroup || '기타';
-        let groupKey;
-        if (cropGroup.includes('식량')) groupKey = 'grain';
-        else if (cropGroup.includes('채소')) groupKey = 'vegetable';
-        else if (cropGroup.includes('과수')) groupKey = 'fruit';
-        else if (cropGroup.includes('특약') || cropGroup.includes('특용')) groupKey = 'special';
-        else groupKey = 'special'; // 기타는 특약용으로 분류
-        
-        results[category][groupKey].push({
+
+        processedCount++;
+
+        const cropInfo = {
             name: cropName,
-            valueA,
-            valueB,
-            changeRate,
-            cropGroup
-        });
-        results[category].total++;
+            cropGroup: cropGroup,
+            valueA: valueA,
+            valueB: valueB,
+            compositionA: compositionA,
+            compositionB: compositionB,
+            valueChangeRate: valueChangeRate,
+            compositionChangeRate: compositionChangeRate
+        };
+
+        // 면적/생산량 변화에 따른 분류
+        areaResults[valueCategory].push(cropInfo);
+
+        // 구성비 변화에 따른 분류
+        compositionResults[compositionCategory].push(cropInfo);
     });
-    
-    
-    // 원본 함수와 동일한 구조로 변환 (배열로)
-    const convertToArray = (category) => {
-        const allCrops = [
-            ...category.grain,
-            ...category.vegetable,
-            ...category.fruit,
-            ...category.special
-        ];
-        return allCrops;
-    };
-    
-    const formattedResults = {
-        increase: convertToArray(results.increase),
-        maintain: convertToArray(results.maintain),
-        decrease: convertToArray(results.decrease)
-    };
-    
-    
+
+
     // updateCultivationTrendTable이 기대하는 구조로 변환
     return {
-        area: formattedResults,
-        composition: formattedResults
+        area: areaResults,
+        composition: compositionResults
     };
 }
 
