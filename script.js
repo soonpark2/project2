@@ -5001,45 +5001,55 @@ function setupSpecializationControls() {
 function initSpecializationEventListeners() {
     const yearSelect = document.getElementById('specialization-year');
     const metricSelect = document.getElementById('specialization-metric');
+    const areaFilter = document.getElementById('area-filter');
     const thresholdSelect = document.getElementById('coefficient-threshold');
-    
-    [yearSelect, metricSelect, thresholdSelect].forEach(select => {
+    const chartCropGroupFilter = document.getElementById('chart-crop-group-filter');
+    const chartCoefficientFilter = document.getElementById('chart-coefficient-filter');
+
+    [yearSelect, metricSelect, areaFilter, thresholdSelect].forEach(select => {
         if (select) {
             select.addEventListener('change', updateSpecializationAnalysis);
         }
     });
-    
+
+    // 차트 필터 이벤트 리스너
+    if (chartCropGroupFilter) {
+        chartCropGroupFilter.addEventListener('change', updateSpecializationAnalysis);
+    }
+    if (chartCoefficientFilter) {
+        chartCoefficientFilter.addEventListener('change', updateSpecializationAnalysis);
+    }
 }
 
 // 특화계수 분석 업데이트
 function updateSpecializationAnalysis() {
     const year = parseInt(document.getElementById('specialization-year')?.value);
     const metric = document.getElementById('specialization-metric')?.value || 'area';
-    const threshold = parseFloat(document.getElementById('coefficient-threshold')?.value || '1');
-    
+    const areaFilter = document.getElementById('area-filter')?.value || '100';
+    const threshold = parseFloat(document.getElementById('coefficient-threshold')?.value || '1.2');
+
     if (!year) {
         return;
     }
-    
-    
+
+    // area-filter 값에 따라 100ha 미만 포함 여부 결정
+    const includeUnder100ha = (areaFilter === 'all');
+
     // 특화계수 데이터 계산
-    const specializationData = calculateSpecializationCoefficients(year, metric);
-    
+    const specializationData = calculateSpecializationCoefficients(year, metric, includeUnder100ha);
+
     if (specializationData && specializationData.length > 0) {
-        // 전국 기준 100ha 이상 필터링된 데이터 생성
-        const filteredData = filterSpecializationByNationalArea(specializationData, year);
-        
-        // threshold가 -1이면 전체 데이터(100ha미만 포함) 사용, 아니면 필터링된 데이터 사용
-        const tableData = threshold === -1 ? specializationData : filteredData;
-        
-        // KPI 업데이트 (필터링된 데이터 사용)
-        updateSpecializationKPIs(filteredData);
-        
+        // tableData는 전체 데이터 사용
+        const tableData = specializationData;
+
+        // KPI 업데이트 (전체 데이터 사용)
+        updateSpecializationKPIs(specializationData);
+
         // 테이블 업데이트 (threshold에 따라 데이터 선택)
-        updateSpecializationTable(tableData, threshold === -1 ? 0 : threshold);
-        
-        // 차트 업데이트 (필터링된 데이터 사용)
-        // updateSpecializationChart(filteredData, metric);
+        updateSpecializationTable(tableData, threshold);
+
+        // 차트 업데이트 (전체 데이터 사용 - 모든 작목 표시)
+        updateSpecializationChart(specializationData, metric);
         
         // 특화계수 분류 기준별 현황 업데이트 (전체 데이터 사용)
         updateSpecializationGradeStatus(specializationData);
@@ -5138,57 +5148,84 @@ function updateGradeCropList(containerId, crops) {
 }
 
 // 특화계수 계산
-function calculateSpecializationCoefficients(year, metric) {
-    
+function calculateSpecializationCoefficients(year, metric, includeUnder100ha = false) {
+
     // 전국 데이터와 강원 데이터 가져오기
-    const nationalData = appState.data.raw.filter(row => 
+    const nationalData = appState.data.raw.filter(row =>
         row.year == year && row.region === '전국'
     );
-    const gangwonData = appState.data.raw.filter(row => 
+    const gangwonData = appState.data.raw.filter(row =>
         row.year == year && row.region === '강원'
     );
-    
-    
+
+
     if (nationalData.length === 0 || gangwonData.length === 0) {
         return [];
     }
-    
+
+    // 1단계: 전국 재배면적 필터링 (옵션에 따라)
+    let filteredNationalData;
+    if (includeUnder100ha) {
+        // 100ha 미만 포함 (전체)
+        filteredNationalData = nationalData;
+        console.log(`[특화계수 디버깅] 연도: ${year}, 측정항목: ${metric}, 필터: 전체(100ha미만 포함)`);
+    } else {
+        // 100ha 이상만
+        filteredNationalData = nationalData.filter(row => {
+            const nationalArea = row['면적(ha)'] || row.area || 0;
+            return nationalArea >= 100;
+        });
+        console.log(`[특화계수 디버깅] 연도: ${year}, 측정항목: ${metric}, 필터: 100ha 이상`);
+    }
+
+    console.log(`1단계: 전국 전체 작목 수: ${nationalData.length}개`);
+    console.log(`1단계: 필터링 후 작목 수: ${filteredNationalData.length}개`);
+
     // 전국 및 강원 총합 계산
     const nationalTotal = nationalData.reduce((sum, row) => {
         const value = metric === 'area' ? (row.area || 0) : (row.production || 0);
         return sum + value;
     }, 0);
-    
+
     const gangwonTotal = gangwonData.reduce((sum, row) => {
         const value = metric === 'area' ? (row.area || 0) : (row.production || 0);
         return sum + value;
     }, 0);
-    
-    
+
+
     const specializationData = [];
-    
-    // 강원 데이터를 기준으로 특화계수 계산
-    gangwonData.forEach(gangwonRow => {
-        const nationalRow = nationalData.find(row => 
-            row.cropName === gangwonRow.cropName && row.cropGroup === gangwonRow.cropGroup
+    let gangwonMatchCount = 0;
+    let gangwonValueZeroCount = 0;
+
+    // 2단계: 전국 100ha 이상 작목을 기준으로 강원 데이터 매칭
+    filteredNationalData.forEach(nationalRow => {
+        const gangwonRow = gangwonData.find(row =>
+            row.cropName === nationalRow.cropName && row.cropGroup === nationalRow.cropGroup
         );
-        
-        if (nationalRow) {
+
+        // 3단계: 강원 데이터가 있고, 재배면적이 0보다 큰 경우만 포함
+        if (gangwonRow) {
+            gangwonMatchCount++;
             const gangwonValue = metric === 'area' ? (gangwonRow['면적(ha)'] || 0) : (gangwonRow['생산량(톤)'] || 0);
             const nationalValue = metric === 'area' ? (nationalRow['면적(ha)'] || 0) : (nationalRow['생산량(톤)'] || 0);
-            
+
+            // 강원 재배면적/생산량이 0이거나 null이면 제외
             if (gangwonValue > 0 && nationalValue > 0 && gangwonTotal > 0 && nationalTotal > 0) {
-                // 비중 계산
-                const gangwonShare = (gangwonValue / gangwonTotal) * 100;
-                const nationalShare = (nationalValue / nationalTotal) * 100;
-                
-                // 특화계수 계산: (강원 비중) / (전국 비중)
-                const coefficient = nationalShare > 0 ? (gangwonShare / nationalShare) : 0;
-                
+                // 비중 계산 (정확한 값으로)
+                const gangwonShareRaw = (gangwonValue / gangwonTotal) * 100;
+                const nationalShareRaw = (nationalValue / nationalTotal) * 100;
+
+                // 특화계수 계산: (강원 비중) / (전국 비중) - 반올림 전 정확한 값 사용
+                const coefficient = nationalShareRaw > 0 ? (gangwonShareRaw / nationalShareRaw) : 0;
+
+                // 표시용 비중 (소수점 2자리 반올림)
+                const gangwonShare = Math.round(gangwonShareRaw * 100) / 100;
+                const nationalShare = Math.round(nationalShareRaw * 100) / 100;
+
                 if (coefficient > 0) {
                     specializationData.push({
-                        cropName: gangwonRow.cropName,
-                        cropGroup: gangwonRow.cropGroup || '기타',
+                        cropName: nationalRow.cropName,
+                        cropGroup: nationalRow.cropGroup || '기타',
                         coefficient: coefficient,
                         gangwonShare: gangwonShare,
                         nationalShare: nationalShare,
@@ -5197,10 +5234,21 @@ function calculateSpecializationCoefficients(year, metric) {
                         grade: getSpecializationGrade(coefficient)
                     });
                 }
+            } else {
+                if (gangwonValue === 0) {
+                    gangwonValueZeroCount++;
+                    console.log(`  제외(강원값0): ${nationalRow.cropName} (${nationalRow.cropGroup})`);
+                }
             }
+        } else {
+            console.log(`  제외(강원없음): ${nationalRow.cropName} (${nationalRow.cropGroup})`);
         }
     });
-    
+
+    console.log(`2단계: 강원 데이터 매칭된 작목 수: ${gangwonMatchCount}개`);
+    console.log(`3단계: 강원 값이 0인 작목 수: ${gangwonValueZeroCount}개`);
+    console.log(`최종: 특화계수 계산 완료 작목 수: ${specializationData.length}개`);
+
     // 특화계수 순으로 정렬
     specializationData.sort((a, b) => b.coefficient - a.coefficient);
 
@@ -5269,8 +5317,6 @@ function updateSpecializationTable(data, threshold) {
             <td class="crop-name">${item.cropName}</td>
             <td>${item.cropGroup}</td>
             <td class="coefficient">${item.coefficient.toFixed(1)}</td>
-            <td>${item.gangwonShare.toFixed(2)}</td>
-            <td>${item.nationalShare.toFixed(2)}</td>
             <td><span class="grade-${item.grade.level}">${item.grade.label}</span></td>
         `;
         
@@ -5283,88 +5329,285 @@ function updateSpecializationTable(data, threshold) {
 function updateSpecializationChart(data, metric) {
     const canvas = document.getElementById('specialization-chart');
     const ctx = canvas.getContext('2d');
-    
+
     // 기존 차트 제거
     if (window.specializationChart) {
         window.specializationChart.destroy();
     }
-    
-    // 상위 20개 작목만 표시
-    const topCrops = data.slice(0, 20);
-    
+
+    // 필터 값 가져오기
+    const cropGroupFilter = document.getElementById('chart-crop-group-filter')?.value || 'all';
+    const coefficientFilter = parseFloat(document.getElementById('chart-coefficient-filter')?.value || '0');
+
+    // 데이터 필터링
+    let filteredData = data;
+
+    // 작목군 필터
+    if (cropGroupFilter !== 'all') {
+        filteredData = filteredData.filter(item => item.cropGroup === cropGroupFilter);
+    }
+
+    // 특화계수 필터
+    if (coefficientFilter > 0) {
+        filteredData = filteredData.filter(item => item.coefficient >= coefficientFilter);
+    }
+
+    // 전체 작목 표시 (제한 없음)
+    const topCrops = filteredData;
+
     const metricText = metric === 'area' ? '재배면적' : '생산량';
-    
+    const metricUnit = metric === 'area' ? 'ha' : '톤';
+
+    // 작목군별 색상 매핑 (더 생동감 있는 색상)
+    const cropGroupColors = {
+        '식량': {
+            bg: 'rgba(99, 102, 241, 0.8)',    // 인디고
+            border: 'rgb(99, 102, 241)',
+            hover: 'rgba(99, 102, 241, 1)'
+        },
+        '채소': {
+            bg: 'rgba(16, 185, 129, 0.8)',    // 에메랄드
+            border: 'rgb(16, 185, 129)',
+            hover: 'rgba(16, 185, 129, 1)'
+        },
+        '과수': {
+            bg: 'rgba(251, 146, 60, 0.8)',    // 오렌지
+            border: 'rgb(251, 146, 60)',
+            hover: 'rgba(251, 146, 60, 1)'
+        },
+        '특약용작물': {
+            bg: 'rgba(168, 85, 247, 0.8)',    // 퍼플
+            border: 'rgb(168, 85, 247)',
+            hover: 'rgba(168, 85, 247, 1)'
+        },
+        '기타': {
+            bg: 'rgba(107, 114, 128, 0.8)',   // 그레이
+            border: 'rgb(107, 114, 128)',
+            hover: 'rgba(107, 114, 128, 1)'
+        }
+    };
+
+    // 포인트 크기를 특화계수에 따라 차등 적용
+    const pointSizes = topCrops.map(item => {
+        if (item.coefficient >= 3.0) return 12;
+        if (item.coefficient >= 2.0) return 10;
+        if (item.coefficient >= 1.2) return 8;
+        return 6;
+    });
+
     window.specializationChart = new Chart(ctx, {
-        type: 'scatter',
+        type: 'bubble',
         data: {
             datasets: [{
-                label: '특화계수',
-                data: topCrops.map(item => ({
-                    x: item.nationalShare,
+                label: '특화작목',
+                data: topCrops.map((item, index) => ({
+                    x: item.gangwonValue,
                     y: item.coefficient,
+                    r: pointSizes[index],
                     cropName: item.cropName,
-                    cropGroup: item.cropGroup
+                    cropGroup: item.cropGroup,
+                    gangwonShare: item.gangwonShare,
+                    nationalShare: item.nationalShare,
+                    gangwonValue: item.gangwonValue
                 })),
-                backgroundColor: topCrops.map(item => {
-                    if (item.coefficient >= 3.0) return 'rgba(220, 38, 38, 0.7)';
-                    if (item.coefficient >= 2.0) return 'rgba(234, 88, 12, 0.7)';
-                    if (item.coefficient >= 1.2) return 'rgba(5, 150, 105, 0.7)';
-                    return 'rgba(107, 114, 128, 0.7)';
-                }),
-                borderColor: topCrops.map(item => {
-                    if (item.coefficient >= 3.0) return 'rgba(220, 38, 38, 1)';
-                    if (item.coefficient >= 2.0) return 'rgba(234, 88, 12, 1)';
-                    if (item.coefficient >= 1.2) return 'rgba(5, 150, 105, 1)';
-                    return 'rgba(107, 114, 128, 1)';
-                }),
-                pointRadius: 6,
-                pointHoverRadius: 8
+                backgroundColor: topCrops.map(item =>
+                    (cropGroupColors[item.cropGroup] || cropGroupColors['기타']).bg
+                ),
+                borderColor: topCrops.map(item =>
+                    (cropGroupColors[item.cropGroup] || cropGroupColors['기타']).border
+                ),
+                borderWidth: 2.5,
+                hoverBackgroundColor: topCrops.map(item =>
+                    (cropGroupColors[item.cropGroup] || cropGroupColors['기타']).hover
+                ),
+                hoverBorderWidth: 3
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            },
             plugins: {
                 title: {
-                    display: true,
-                    text: `${metricText} 기준 특화계수 분포 (상위 20개 작목)`
+                    display: false
                 },
                 tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#4b5563',
+                    borderWidth: 1,
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    displayColors: true,
                     callbacks: {
+                        title: function(context) {
+                            const point = context[0].raw;
+                            return `${point.cropName}`;
+                        },
                         label: function(context) {
                             const point = context.raw;
                             return [
-                                `작목: ${point.cropName}`,
                                 `작목군: ${point.cropGroup}`,
-                                `전국 비중: ${context.parsed.x.toFixed(2)}%`,
-                                `특화계수: ${context.parsed.y.toFixed(1)}`
+                                `강원 ${metricText}: ${point.gangwonValue.toLocaleString()}${metricUnit}`,
+                                `특화계수: ${point.y.toFixed(2)}`,
+                                `강원 비중: ${point.gangwonShare.toFixed(2)}%`,
+                                `전국 비중: ${point.nationalShare.toFixed(2)}%`
                             ];
                         }
                     }
+                },
+                legend: {
+                    display: false
+                },
+                datalabels: {
+                    display: false
                 }
             },
             scales: {
                 x: {
+                    type: 'linear',
                     display: true,
                     title: {
                         display: true,
-                        text: `전국 ${metricText} 비중 (%)`
+                        text: `강원 ${metricText} (${metricUnit})`,
+                        font: {
+                            size: 13,
+                            weight: 'bold',
+                            family: "'Noto Sans KR', sans-serif"
+                        },
+                        color: '#374151',
+                        padding: { top: 10 }
+                    },
+                    grid: {
+                        color: 'rgba(156, 163, 175, 0.15)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: { size: 11 },
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
                     }
                 },
                 y: {
                     display: true,
                     title: {
                         display: true,
-                        text: '특화계수'
+                        text: '특화계수',
+                        font: {
+                            size: 13,
+                            weight: 'bold',
+                            family: "'Noto Sans KR', sans-serif"
+                        },
+                        color: '#374151',
+                        padding: { bottom: 10 }
                     },
-                    min: 0
+                    min: 0,
+                    grid: {
+                        color: function(context) {
+                            // 특화계수 1.2 기준선 강조
+                            if (context.tick.value === 1.2) {
+                                return 'rgba(220, 38, 38, 0.3)';
+                            }
+                            return 'rgba(156, 163, 175, 0.15)';
+                        },
+                        lineWidth: function(context) {
+                            if (context.tick.value === 1.2) {
+                                return 2;
+                            }
+                            return 1;
+                        }
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: { size: 11 },
+                        callback: function(value) {
+                            return value.toFixed(1);
+                        }
+                    }
                 }
+            },
+            interaction: {
+                mode: 'point',
+                intersect: true
             }
         }
     });
-    
+
+    // 범례와 인사이트 수동 추가
+    const legendHTML = `
+        <div style="background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%); padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #e5e7eb;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 13px; color: #374151; font-weight: 600;">
+                    <i class="fas fa-lightbulb" style="color: #f59e0b; margin-right: 5px;"></i>
+                    차트 해석 가이드
+                </div>
+                <div style="font-size: 11px; color: #6b7280;">
+                    <span style="color: #dc2626; font-weight: 600;">━━</span> 특화 기준선 (1.2)
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; font-size: 12px;">
+                <div style="background: rgba(220, 38, 38, 0.05); padding: 8px; border-radius: 6px; border-left: 3px solid #dc2626;">
+                    <span style="font-weight: 600; color: #991b1b;">우상단 (규모↑ 특화↑)</span>
+                    <div style="color: #6b7280; font-size: 11px; margin-top: 2px;">핵심 전략 작목</div>
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.05); padding: 8px; border-radius: 6px; border-left: 3px solid #10b981;">
+                    <span style="font-weight: 600; color: #065f46;">좌상단 (규모↓ 특화↑)</span>
+                    <div style="color: #6b7280; font-size: 11px; margin-top: 2px;">틈새 특화 작목</div>
+                </div>
+                <div style="background: rgba(59, 130, 246, 0.05); padding: 8px; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                    <span style="font-weight: 600; color: #1e40af;">우하단 (규모↑ 특화↓)</span>
+                    <div style="color: #6b7280; font-size: 11px; margin-top: 2px;">규모화 대상 작목</div>
+                </div>
+                <div style="background: rgba(107, 114, 128, 0.05); padding: 8px; border-radius: 6px; border-left: 3px solid #6b7280;">
+                    <span style="font-weight: 600; color: #374151;">좌하단 (규모↓ 특화↓)</span>
+                    <div style="color: #6b7280; font-size: 11px; margin-top: 2px;">일반 작목</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+                <span style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <span style="width: 14px; height: 14px; background: ${cropGroupColors['식량'].bg}; border: 2px solid ${cropGroupColors['식량'].border}; border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></span>
+                    <span style="color: #374151; font-weight: 500;">식량</span>
+                </span>
+                <span style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <span style="width: 14px; height: 14px; background: ${cropGroupColors['채소'].bg}; border: 2px solid ${cropGroupColors['채소'].border}; border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></span>
+                    <span style="color: #374151; font-weight: 500;">채소</span>
+                </span>
+                <span style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <span style="width: 14px; height: 14px; background: ${cropGroupColors['과수'].bg}; border: 2px solid ${cropGroupColors['과수'].border}; border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></span>
+                    <span style="color: #374151; font-weight: 500;">과수</span>
+                </span>
+                <span style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                    <span style="width: 14px; height: 14px; background: ${cropGroupColors['특약용작물'].bg}; border: 2px solid ${cropGroupColors['특약용작물'].border}; border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></span>
+                    <span style="color: #374151; font-weight: 500;">특약용작물</span>
+                </span>
+            </div>
+        </div>
+    `;
+
+    const chartContainer = canvas.parentElement;
+    let legendContainer = chartContainer.querySelector('.custom-legend');
+    if (!legendContainer) {
+        legendContainer = document.createElement('div');
+        legendContainer.className = 'custom-legend';
+        chartContainer.appendChild(legendContainer);
+    }
+    legendContainer.innerHTML = legendHTML;
+
     // 타이틀 업데이트
-    document.getElementById('specialization-chart-title').textContent = `${metricText} 특화계수 분포`;
+    document.getElementById('specialization-chart-title').innerHTML = `<i class="fas fa-chart-scatter"></i> ${metricText} 규모 × 특화계수 (${topCrops.length}개 작목)`;
     document.getElementById('specialization-table-title').textContent = `${metricText} 특화작목 상세`;
 }
 

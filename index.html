@@ -1424,6 +1424,13 @@
                                     <option value="production">생산량 (톤)</option>
                                 </select>
                             </div>
+                            <div class="area-filter-selector">
+                                <label>데이터 범위</label>
+                                <select class="area-filter-select" id="area-filter">
+                                    <option value="100" selected>100ha 이상</option>
+                                    <option value="all">전체(100ha미만 포함)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1435,7 +1442,7 @@
                             <i class="fas fa-info-circle"></i>
                             <span class="notice-title">특화계수 분석 개요</span>
                         </div>
-                        <div class="filter-notice">※ 분석연도 전국 기준 재배면적 100ha 이상 작목 대상</div>
+                        <div class="filter-notice">※ 상단 '데이터 범위'에서 분석 대상 선택 가능 (기본값: 100ha 이상)</div>
                     </div>
                     <div class="notice-body">
                         <div class="formula-section">
@@ -1631,6 +1638,37 @@
                     <!-- Main Content Grid -->
                     <div class="specialization-main-grid">
 
+                        <!-- Specialization Chart -->
+                        <div class="specialization-chart-card">
+                            <div class="chart-header">
+                                <h3 id="specialization-chart-title"><i class="fas fa-chart-scatter"></i> 특화계수 분포</h3>
+                                <div class="chart-filters" style="display: flex; gap: 10px; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <label style="font-size: 12px; color: #6b7280; white-space: nowrap;">작목군</label>
+                                        <select id="chart-crop-group-filter" style="padding: 5px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                            <option value="all">전체</option>
+                                            <option value="식량">식량</option>
+                                            <option value="채소">채소</option>
+                                            <option value="과수">과수</option>
+                                            <option value="특약용작물">특약용작물</option>
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <label style="font-size: 12px; color: #6b7280; white-space: nowrap;">특화계수</label>
+                                        <select id="chart-coefficient-filter" style="padding: 5px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                            <option value="0">전체</option>
+                                            <option value="1.2">특화 (≥1.2)</option>
+                                            <option value="2.0">고특화 (≥2.0)</option>
+                                            <option value="3.0">고도특화 (≥3.0)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container" style="position: relative; height: 500px;">
+                                <canvas id="specialization-chart"></canvas>
+                            </div>
+                        </div>
+
                         <!-- Specialization Table -->
                         <div class="specialization-table-card">
                             <div class="table-header">
@@ -1639,9 +1677,8 @@
                                     <div class="coefficient-filter">
                                         <label>최소 특화계수</label>
                                         <select id="coefficient-threshold">
-                                            <option value="-1">전체(100ha미만 포함)</option>
-                                            <option value="0">일반 (0.0 이상)</option>
-                                            <option value="1.2" selected>특화작목 (1.2 이상)</option>
+                                            <option value="0">전체 (0.0 이상)</option>
+                                            <option value="1.2" selected>특화 (1.2 이상)</option>
                                             <option value="2">고특화 (2.0 이상)</option>
                                             <option value="3">고도특화 (3.0 이상)</option>
                                         </select>
@@ -1657,8 +1694,6 @@
                                             <th>작목명</th>
                                             <th>작목군</th>
                                             <th>특화계수</th>
-                                            <th>강원 비중(%)</th>
-                                            <th>전국 비중(%)</th>
                                             <th>특화등급</th>
                                         </tr>
                                     </thead>

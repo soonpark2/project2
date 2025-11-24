@@ -1211,7 +1211,7 @@ body {
     border: 1px solid rgba(20, 184, 166, 0.1);
 }
 
-.year-selector, .metric-selector {
+.year-selector, .metric-selector, .area-filter-selector {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-2);
@@ -1225,7 +1225,7 @@ body {
     justify-self: end;
 }
 
-.year-selector label, .metric-selector label {
+.year-selector label, .metric-selector label, .area-filter-selector label {
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
     color: var(--primary-color);
@@ -1233,11 +1233,11 @@ body {
     letter-spacing: 0.5px;
 }
 
-.metric-selector {
+.metric-selector, .area-filter-selector {
     min-width: 140px;
 }
 
-.year-select, .metric-select {
+.year-select, .metric-select, .area-filter-select {
     padding: var(--spacing-3) var(--spacing-4);
     border: 2px solid var(--gray-200);
     border-radius: var(--radius-lg);
@@ -1252,16 +1252,16 @@ body {
     min-width: 110px;
 }
 
-.year-select:hover, .metric-select:hover {
+.year-select:hover, .metric-select:hover, .area-filter-select:hover {
     border-color: var(--primary-color);
     background: var(--white);
     box-shadow: var(--shadow-md);
 }
 
-.year-select:focus, .metric-select:focus {
+.year-select:focus, .metric-select:focus, .area-filter-select:focus {
     border-color: var(--primary-color);
     background: var(--white);
-    box-shadow: 
+    box-shadow:
         var(--shadow-md),
         0 0 0 3px rgba(20, 184, 166, 0.1);
 }
@@ -2791,11 +2791,11 @@ body {
         width: 100%;
     }
     
-    .year-selector, .metric-selector {
+    .year-selector, .metric-selector, .area-filter-selector {
         width: 100%;
     }
-    
-    .year-select, .metric-select {
+
+    .year-select, .metric-select, .area-filter-select {
         width: 100%;
         min-width: auto;
     }
@@ -3818,6 +3818,25 @@ select:focus-visible {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    table-layout: fixed;
+}
+
+/* 순위 열만 작게 */
+.specialization-table th:nth-child(1),
+.specialization-table td:nth-child(1) {
+    width: 60px;
+}
+
+/* 나머지 열은 균등하게 */
+.specialization-table th:nth-child(2),
+.specialization-table th:nth-child(3),
+.specialization-table th:nth-child(4),
+.specialization-table th:nth-child(5),
+.specialization-table td:nth-child(2),
+.specialization-table td:nth-child(3),
+.specialization-table td:nth-child(4),
+.specialization-table td:nth-child(5) {
+    width: calc((100% - 60px) / 4);
 }
 
 .specialization-table th {
@@ -3851,7 +3870,7 @@ select:focus-visible {
 }
 
 .specialization-table .crop-name {
-    text-align: left;
+    text-align: center;
     font-weight: 500;
     color: var(--gray-800);
 }
